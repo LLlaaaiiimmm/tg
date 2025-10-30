@@ -1,0 +1,266 @@
+import 'dotenv/config';
+import axios from 'axios';
+import redis from '../redis.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export class GenerationService {
+    constructor() {
+        this.apiKey = process.env.GOOGLE_VEO3_API_KEY;
+        this.projectId = process.env.GOOGLE_VEO3_PROJECT_ID;
+        // Базовый URL для Google Veo3 API (нужно уточнить по документации)
+        this.apiUrl = `https://generativelanguage.googleapis.com/v1beta`;
+    }
+
+    // Загрузка промпта мема
+    loadMemePrompt(memeId) {
+        try {
+            const memePath = path.join(__dirname, '../memes', `${memeId}.json`);
+            const memeData = JSON.parse(fs.readFileSync(memePath, 'utf8'));
+            return memeData;
+        } catch (err) {
+            console.error(`❌ Error loading meme ${memeId}: ${err.message}`);
+            return null;
+        }
+    }
+
+    // Создание генерации
+    async createGeneration({ userId, memeId, name, gender }) {
+        try {
+            const generationId = this.generateId();
+            const memeData = this.loadMemePrompt(memeId);
+
+            if (!memeData) {
+                return { error: 'Мем не найден' };
+            }
+
+            const genderText = gender === 'male' ? 'мальчик' : 'девочка';
+            const prompt = memeData.prompt
+                .replace('{name}', name)
+                .replace('{gender}', gender)
+                .replace('{gender_text}', genderText);
+
+            const generation = {
+                generationId,
+                userId,
+                memeId,
+                memeName: memeData.name,
+                name,
+                gender,
+                prompt,
+                status: 'queued',
+                videoUrl: null,
+                error: null,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            await redis.set(`generation:${generationId}`, JSON.stringify(generation));
+            await redis.lpush('generation_queue', generationId);
+            await redis.lpush(`user_generations:${userId}`, generationId);
+
+            console.log(`🎬 Generation ${generationId} created for user ${userId}`);
+
+            // Запуск генерации асинхронно
+            this.processGeneration(generationId).catch(err => {
+                console.error(`❌ Error processing generation ${generationId}: ${err.message}`);
+            });
+
+            return generation;
+        } catch (err) {
+            console.error(`❌ Error creating generation: ${err.message}`);
+            return { error: err.message };
+        }
+    }
+
+    // Обработка генерации
+    async processGeneration(generationId) {
+        try {
+            const generation = await this.getGeneration(generationId);
+            if (!generation) return;
+
+            // Обновляем статус
+            await this.updateGeneration(generationId, { status: 'processing' });
+
+            // Вызов Google Veo3 API
+            const videoUrl = await this.generateVideo(generation.prompt);
+
+            if (videoUrl) {
+                await this.updateGeneration(generationId, {
+                    status: 'done',
+                    videoUrl: videoUrl
+                });
+                console.log(`✅ Generation ${generationId} completed successfully`);
+            } else {
+                throw new Error('Failed to generate video');
+            }
+        } catch (err) {
+            console.error(`❌ Generation ${generationId} failed: ${err.message}`);
+            await this.updateGeneration(generationId, {
+                status: 'failed',
+                error: err.message
+            });
+        }
+    }
+
+    // Генерация видео через Google Veo3 API
+    async generateVideo(prompt) {
+        try {
+            if (!this.apiKey) {
+                throw new Error('Google Veo3 API key not configured');
+            }
+
+            // Пример запроса - нужно адаптировать под реальный API
+            // Документация: https://labs.google/flow/about
+            const response = await axios.post(
+                `${this.apiUrl}/models/veo:generateVideo?key=${this.apiKey}`,
+                {
+                    prompt: prompt,
+                    parameters: {
+                        duration: 5,
+                        aspectRatio: '16:9',
+                        quality: 'high'
+                    }
+                },
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 180000 // 3 минуты
+                }
+            );
+
+            if (response.data && response.data.videoUrl) {
+                return response.data.videoUrl;
+            }
+
+            // Если генерация асинхронная, может потребоваться polling
+            if (response.data && response.data.operationId) {
+                return await this.pollVideoGeneration(response.data.operationId);
+            }
+
+            throw new Error('Invalid API response');
+        } catch (err) {
+            console.error(`❌ Video generation error: ${err.message}`);
+            throw err;
+        }
+    }
+
+    // Polling для проверки статуса генерации
+    async pollVideoGeneration(operationId, maxAttempts = 60, interval = 5000) {
+        for (let i = 0; i < maxAttempts; i++) {
+            try {
+                const response = await axios.get(
+                    `${this.apiUrl}/operations/${operationId}?key=${this.apiKey}`
+                );
+
+                if (response.data.done) {
+                    if (response.data.error) {
+                        throw new Error(response.data.error.message);
+                    }
+                    return response.data.response?.videoUrl;
+                }
+
+                await new Promise(resolve => setTimeout(resolve, interval));
+            } catch (err) {
+                console.error(`❌ Polling error: ${err.message}`);
+                throw err;
+            }
+        }
+
+        throw new Error('Video generation timeout');
+    }
+
+    // Получение генерации
+    async getGeneration(generationId) {
+        const data = await redis.get(`generation:${generationId}`);
+        return data ? JSON.parse(data) : null;
+    }
+
+    // Обновление генерации
+    async updateGeneration(generationId, data) {
+        const generation = await this.getGeneration(generationId);
+        if (!generation) return null;
+
+        const updated = {
+            ...generation,
+            ...data,
+            updatedAt: new Date().toISOString()
+        };
+
+        await redis.set(`generation:${generationId}`, JSON.stringify(updated));
+        return updated;
+    }
+
+    // Получение генераций пользователя
+    async getUserGenerations(userId) {
+        const generationIds = await redis.lrange(`user_generations:${userId}`, 0, -1);
+        const generations = [];
+
+        for (const id of generationIds) {
+            const gen = await this.getGeneration(id);
+            if (gen) generations.push(gen);
+        }
+
+        return generations;
+    }
+
+    // Генерация ID
+    generateId() {
+        const timestamp = Date.now();
+        const random = Math.floor(Math.random() * 10000);
+        return `GEN-${timestamp}-${random}`;
+    }
+
+    // Получение статистики генераций
+    async getGenerationStats() {
+        const queueLength = await redis.llen('generation_queue');
+        
+        // Получаем все ID генераций (можно оптимизировать)
+        const allKeys = await redis.keys('generation:*');
+        const stats = {
+            total: allKeys.length,
+            queued: 0,
+            processing: 0,
+            done: 0,
+            failed: 0
+        };
+
+        for (const key of allKeys) {
+            const gen = await redis.get(key);
+            if (gen) {
+                const { status } = JSON.parse(gen);
+                stats[status] = (stats[status] || 0) + 1;
+            }
+        }
+
+        return { ...stats, queueLength };
+    }
+
+    // Получение топ мемов
+    async getTopMemes() {
+        const allKeys = await redis.keys('generation:*');
+        const memeCounts = {};
+
+        for (const key of allKeys) {
+            const gen = await redis.get(key);
+            if (gen) {
+                const { memeId, memeName, status } = JSON.parse(gen);
+                if (status === 'done') {
+                    if (!memeCounts[memeId]) {
+                        memeCounts[memeId] = { memeId, memeName, count: 0 };
+                    }
+                    memeCounts[memeId].count++;
+                }
+            }
+        }
+
+        return Object.values(memeCounts)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 10);
+    }
+}
