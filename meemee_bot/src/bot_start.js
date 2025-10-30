@@ -309,6 +309,44 @@ async function waitForGeneration(ctx, generationId, maxAttempts = 60) {
     await ctx.reply('⏰ Генерация занимает больше времени. Мы отправим вам видео, когда оно будет готово.');
 }
 
+// Импорт контроллеров платежей
+import * as paymentController from './controllers/paymentController.js';
+
+// Обработка кнопки "Купить видео"
+bot.action('buy', (ctx) => paymentController.handleBuy(ctx));
+
+// Обработка кнопки "О проекте"
+bot.action('about', (ctx) => paymentController.handleAbout(ctx));
+
+// Обработка реферальной программы
+bot.action('referral', (ctx) => paymentController.handleReferral(ctx));
+bot.action('ref_user', (ctx) => paymentController.handleRefUser(ctx));
+bot.action('ref_expert', (ctx) => paymentController.handleRefExpert(ctx));
+
+// Обработка оплаты
+bot.action('pay_card', (ctx) => paymentController.handlePayCard(ctx));
+bot.action('pay_crypto', (ctx) => paymentController.handlePayCrypto(ctx));
+bot.action('pay_stars_soon', (ctx) => paymentController.handlePayStarsSoon(ctx));
+
+// Обработка выбора криптовалюты
+bot.action(/crypto_(\w+)/, (ctx) => {
+    const crypto = ctx.match[1];
+    paymentController.handleCryptoSelect(ctx, crypto);
+});
+
+// Обработка выбора сети
+bot.action(/chain_(\w+)_(.+)/, (ctx) => {
+    const crypto = ctx.match[1];
+    const chain = ctx.match[2];
+    paymentController.handleChainSelect(ctx, crypto, chain);
+});
+
+// Обработка проверки платежа
+bot.action(/check_payment_(.+)/, (ctx) => {
+    const orderId = ctx.match[1];
+    paymentController.handleCheckPayment(ctx, orderId);
+});
+
 // Запуск бота
 bot.launch()
     .then(() => {
