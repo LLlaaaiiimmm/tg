@@ -80,17 +80,20 @@ export async function handleSelectPackage(ctx, packageKey) {
 }
 
 // Обработчик оплаты картой
-export async function handlePayCard(ctx) {
+export async function handlePayCard(ctx, packageKey = 'single') {
     try {
         ctx.session = ctx.session || {};
         ctx.session.waitingFor = 'email';
+        ctx.session.selectedPackage = packageKey;
+        
+        const pkg = PACKAGES[packageKey];
         
         await ctx.editMessageText(
-            '📧 Пожалуйста, введите ваш email для отправки чека:',
+            `💳 Оплата картой\n\n${pkg.emoji} ${pkg.title}: ${pkg.rub}₽\n\n📧 Пожалуйста, введите ваш email для отправки чека:`,
             {
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: '🔙 Назад', callback_data: 'buy' }]
+                        [{ text: '🔙 Назад', callback_data: `select_package_${packageKey}` }]
                     ]
                 }
             }
@@ -102,10 +105,18 @@ export async function handlePayCard(ctx) {
 }
 
 // Обработчик оплаты криптой
-export async function handlePayCrypto(ctx) {
+export async function handlePayCrypto(ctx, packageKey = 'single') {
     try {
-        const keyboard = createCryptoKeyboard();
-        await ctx.editMessageText('💎 Выберите криптовалюту:', { reply_markup: keyboard });
+        ctx.session = ctx.session || {};
+        ctx.session.selectedPackage = packageKey;
+        
+        const pkg = PACKAGES[packageKey];
+        const keyboard = createCryptoKeyboard(packageKey);
+        
+        await ctx.editMessageText(
+            `💎 Оплата криптовалютой\n\n${pkg.emoji} ${pkg.title}: ${pkg.usdt} USDT\n\nВыберите криптовалюту:`,
+            { reply_markup: keyboard }
+        );
     } catch (err) {
         console.error('❌ Error in handlePayCrypto:', err);
         await ctx.answerCbQuery('Произошла ошибка');
