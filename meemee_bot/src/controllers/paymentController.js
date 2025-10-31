@@ -73,7 +73,7 @@ export async function handleCryptoSelect(ctx, crypto) {
         }
         
         const keyboard = createChainKeyboard(crypto, chains);
-        await ctx.editMessageText(`Выберите сеть для ${crypto}:`, keyboard);
+        await ctx.editMessageText(`Выберите сеть для ${crypto}:`, { reply_markup: keyboard });
     } catch (err) {
         console.error('❌ Error in handleCryptoSelect:', err);
         await ctx.answerCbQuery('Произошла ошибка');
