@@ -47,22 +47,55 @@ bot.start(async (ctx) => {
         const userId = ctx.from.id;
         const startPayload = ctx.startPayload;
 
+        // Создание пользователя (перед обработкой реферала)
+        const user = await userService.createUser(ctx.from, startPayload);
+        const isNewUser = !user || user.createdAt === user.updatedAt;
+
         // Обработка реферальных ссылок
-        if (startPayload) {
+        if (startPayload && isNewUser) {
             if (startPayload.startsWith('ref_')) {
                 const referrerId = parseInt(startPayload.replace('ref_', ''));
-                await referralService.processUserReferral(referrerId, userId);
+                const success = await referralService.processUserReferral(referrerId, userId);
+                
+                if (success) {
+                    // Уведомляем нового пользователя о бонусе
+                    await ctx.reply(
+                        `🎉 Вы получили +${REFERRAL_BONUS} бесплатную генерацию за переход по реферальной ссылке!`,
+                        { reply_markup: KEYBOARDS.MAIN_MENU }
+                    );
+                    
+                    // Уведомляем реферера
+                    try {
+                        await bot.telegram.sendMessage(
+                            referrerId,
+                            `🎉 По вашей ссылке зарегистрировался новый пользователь!\n\n+${REFERRAL_BONUS} бесплатная генерация добавлена на ваш баланс!`
+                        );
+                    } catch (notifyErr) {
+                        console.log(`Failed to notify referrer ${referrerId}:`, notifyErr.message);
+                    }
+                }
             } else if (startPayload.startsWith('expert_')) {
                 const expertId = parseInt(startPayload.replace('expert_', ''));
-                await referralService.processExpertReferral(expertId, userId);
+                const success = await referralService.processExpertReferral(expertId, userId);
+                
+                if (success) {
+                    // Уведомляем эксперта
+                    try {
+                        await bot.telegram.sendMessage(
+                            expertId,
+                            `💼 По вашей экспертной ссылке зарегистрировался новый пользователь!\n\n💰 Вы будете получать ${EXPERT_CASHBACK_PERCENT}% с каждой его оплаты!`
+                        );
+                    } catch (notifyErr) {
+                        console.log(`Failed to notify expert ${expertId}:`, notifyErr.message);
+                    }
+                }
             }
         }
 
-        // Создание пользователя
-        await userService.createUser(ctx.from, startPayload);
-
-        // Отправка приветственного сообщения
-        await ctx.reply(MESSAGES.WELCOME, { reply_markup: KEYBOARDS.MAIN_MENU });
+        // Отправка приветственного сообщения (если ещё не отправили)
+        if (!startPayload || !isNewUser || !(startPayload.startsWith('ref_') && await referralService.processUserReferral)) {
+            await ctx.reply(MESSAGES.WELCOME, { reply_markup: KEYBOARDS.MAIN_MENU });
+        }
     } catch (err) {
         console.error('❌ Error in /start:', err);
         await ctx.reply('Произошла ошибка. Попробуйте позже.');
