@@ -219,6 +219,12 @@ bot.action('users', async (ctx) => {
 // Рассылка
 bot.action('broadcast', async (ctx) => {
     try {
+        // Инициализируем сессию если её нет
+        if (!ctx.session) {
+            ctx.session = {};
+        }
+        ctx.session.waitingForBroadcast = true;
+        
         await ctx.editMessageText(
             '📢 Рассылка сообщений\n\nОтправьте текст сообщения для рассылки всем пользователям.\n\n⚠️ Используйте осторожно!',
             {
@@ -229,9 +235,6 @@ bot.action('broadcast', async (ctx) => {
                 }
             }
         );
-        
-        ctx.session = ctx.session || {};
-        ctx.session.waitingForBroadcast = true;
     } catch (err) {
         console.error('❌ Error in broadcast:', err);
         await ctx.answerCbQuery('Ошибка');
