@@ -187,6 +187,9 @@ bot.on('text', async (ctx) => {
                 return await ctx.reply('❌ Некорректный email. Попробуйте ещё раз.');
             }
             
+            const packageKey = ctx.session.selectedPackage || 'single';
+            const pkg = PACKAGES[packageKey];
+            
             ctx.session.email = email;
             delete ctx.session.waitingFor;
             
@@ -194,9 +197,9 @@ bot.on('text', async (ctx) => {
             const payment = await paymentFiatService.createPayment({
                 userId: ctx.from.id,
                 email: email,
-                amount: PACKAGES.single.rub,
+                amount: pkg.rub,
                 bank: 'BANK131',
-                package: 'single'
+                package: packageKey
             });
             
             if (payment.error) {
@@ -204,7 +207,7 @@ bot.on('text', async (ctx) => {
             }
             
             await ctx.reply(
-                `💳 Оплата картой\n\nСумма: ${PACKAGES.single.rub}₽\n\nУ вас есть 1 час для завершения оплаты!`,
+                `💳 Оплата картой\n\n${pkg.emoji} ${pkg.title}\nСумма: ${pkg.rub}₽\n\nУ вас есть 1 час для завершения оплаты!`,
                 {
                     reply_markup: {
                         inline_keyboard: [
