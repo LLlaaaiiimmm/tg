@@ -131,10 +131,13 @@ export class UserService {
         const users = [];
 
         for (const userId of userIds) {
-            const user = await this.getUser(userId);
+            // Преобразуем userId в число, если это строка
+            const numericUserId = typeof userId === 'string' ? parseInt(userId) : userId;
+            const user = await this.getUser(numericUserId);
             if (user) users.push(user);
         }
 
+        console.log(`📊 getAllUsers: found ${users.length} users from ${userIds.length} user IDs`);
         return users;
     }
 
