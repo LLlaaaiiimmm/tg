@@ -233,7 +233,7 @@ bot.action(/gender_(male|female)/, async (ctx) => {
         
         await ctx.editMessageText(
             MESSAGES.CONFIRM_GENERATION(name, gender),
-            KEYBOARDS.CONFIRM_GENERATION
+            { reply_markup: KEYBOARDS.CONFIRM_GENERATION }
         );
     } catch (err) {
         console.error('❌ Error in gender selection:', err);
