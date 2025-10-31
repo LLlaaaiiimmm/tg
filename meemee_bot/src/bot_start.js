@@ -72,9 +72,9 @@ bot.start(async (ctx) => {
 // Обработка главного меню
 bot.action('main_menu', async (ctx) => {
     try {
-        await ctx.editMessageText(MESSAGES.WELCOME, KEYBOARDS.MAIN_MENU);
+        await ctx.editMessageText(MESSAGES.WELCOME, { reply_markup: KEYBOARDS.MAIN_MENU });
     } catch (err) {
-        await ctx.reply(MESSAGES.WELCOME, KEYBOARDS.MAIN_MENU);
+        await ctx.reply(MESSAGES.WELCOME, { reply_markup: KEYBOARDS.MAIN_MENU });
     }
 });
 
