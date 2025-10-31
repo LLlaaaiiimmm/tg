@@ -110,7 +110,35 @@ export const MESSAGES = {
     PAYMENT_CANCELLED: (wallet, amount) => {
         const masked = wallet.length > 8 ? `${wallet.slice(0, 4)}...${wallet.slice(-4)}` : wallet;
         return `⏰ Время оплаты истекло\n\nНе переводите средства (${amount} USDT) на кошелек ${masked}\n\nВыберите другой способ оплаты.`;
-    }
+    },
+
+    PROFILE: (user, generations) => {
+        let message = `👤 Личный кабинет\n\n`;
+        message += `🆔 ID: ${user.userId}\n`;
+        message += `📝 Имя: ${user.firstName || 'не указано'}\n\n`;
+        message += `🎬 Баланс генераций:\n`;
+        message += `├─ 🎁 Бесплатных: ${user.free_quota || 0}\n`;
+        message += `├─ 💎 Платных: ${user.paid_quota || 0}\n`;
+        message += `└─ 📊 Всего доступно: ${(user.free_quota || 0) + (user.paid_quota || 0)}\n\n`;
+        message += `📈 Статистика:\n`;
+        message += `├─ ✅ Успешно: ${user.successful_generations || 0}\n`;
+        message += `├─ ❌ Ошибок: ${user.failed_generations || 0}\n`;
+        message += `└─ 💰 Потрачено: ${user.total_spent || 0}₽\n\n`;
+        
+        if (generations && generations.length > 0) {
+            message += `🎬 Последние генерации:\n`;
+            const recent = generations.slice(0, 5);
+            recent.forEach((gen, idx) => {
+                const statusEmoji = gen.status === 'done' ? '✅' : gen.status === 'failed' ? '❌' : '⏳';
+                const date = new Date(gen.createdAt).toLocaleDateString('ru-RU');
+                message += `${idx + 1}. ${statusEmoji} ${gen.memeName} (${date})\n`;
+            });
+        }
+        
+        return message;
+    },
+
+    CHOOSE_PACKAGE: '💳 Выберите пакет генераций:\n\n📦 Чем больше пакет - тем выгоднее цена за одно видео!'
 };
 
 // Клавиатуры
