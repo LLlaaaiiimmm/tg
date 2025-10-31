@@ -601,6 +601,14 @@ bot.action('broadcast_confirm', async (ctx) => {
         const buttonText = ctx.session.broadcastButtonText;
         const buttonUrl = ctx.session.broadcastButtonUrl;
         
+        console.log(`📤 Starting broadcast to ${allUsers.length} users`);
+        console.log(`Text: ${text ? 'YES' : 'NO'}, Photo: ${photoId ? 'YES' : 'NO'}, Button: ${buttonText ? 'YES' : 'NO'}`);
+        
+        if (allUsers.length === 0) {
+            await ctx.editMessageText('❌ Не найдено ни одного пользователя для рассылки!', ADMIN_MENU);
+            return;
+        }
+        
         let success = 0;
         let failed = 0;
         
@@ -630,14 +638,17 @@ bot.action('broadcast_confirm', async (ctx) => {
                 }
                 
                 success++;
+                console.log(`✅ Sent to user ${user.userId} (${success}/${allUsers.length})`);
                 
                 // Задержка чтобы не превысить лимиты Telegram (30 сообщений в секунду)
                 await new Promise(resolve => setTimeout(resolve, 50));
             } catch (err) {
                 failed++;
-                console.error(`Failed to send to ${user.userId}:`, err.message);
+                console.error(`❌ Failed to send to ${user.userId}:`, err.message);
             }
         }
+        
+        console.log(`📊 Broadcast completed: ${success} success, ${failed} failed`);
         
         await ctx.reply(
             `✅ Рассылка завершена!\n\n✔️ Отправлено: ${success}\n❌ Ошибок: ${failed}`,
