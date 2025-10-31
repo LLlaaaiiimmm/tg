@@ -44,27 +44,27 @@ export function createCatalogKeyboard(page = 0, itemsPerPage = 5) {
 }
 
 // Генерация клавиатуры для выбора криптовалюты
-export function createCryptoKeyboard() {
+export function createCryptoKeyboard(packageKey = 'single') {
     return {
         inline_keyboard: [
-            [{ text: '💵 USDT', callback_data: 'crypto_USDT' }],
-            [{ text: '💰 USDC', callback_data: 'crypto_USDC' }],
-            [{ text: '💎 TON', callback_data: 'crypto_TON' }],
-            [{ text: '🔙 Назад', callback_data: 'buy' }]
+            [{ text: '💵 USDT', callback_data: `crypto_USDT_${packageKey}` }],
+            [{ text: '💰 USDC', callback_data: `crypto_USDC_${packageKey}` }],
+            [{ text: '💎 TON', callback_data: `crypto_TON_${packageKey}` }],
+            [{ text: '🔙 Назад', callback_data: `select_package_${packageKey}` }]
         ]
     };
 }
 
 // Генерация клавиатуры для выбора сети
-export function createChainKeyboard(crypto, chains) {
+export function createChainKeyboard(crypto, chains, packageKey = 'single') {
     const buttons = chains.map(chain => [{
         text: chain.name,
-        callback_data: `chain_${crypto}_${chain.processing.replace(/\s+/g, '_')}`
+        callback_data: `chain_${crypto}_${chain.processing.replace(/\s+/g, '_')}_${packageKey}`
     }]);
     
     buttons.push([{
         text: '🔙 Назад',
-        callback_data: 'pay_crypto'
+        callback_data: `pay_crypto_${packageKey}`
     }]);
     
     return { inline_keyboard: buttons };
