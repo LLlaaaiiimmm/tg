@@ -355,6 +355,22 @@ bot.action(/check_payment_(.+)/, (ctx) => {
     paymentController.handleCheckPayment(ctx, orderId);
 });
 
+// Обработка неизвестных callback (для отладки)
+bot.on('callback_query', async (ctx) => {
+    const callbackData = ctx.callbackQuery.data;
+    console.log('⚠️ Unhandled callback:', callbackData);
+    await ctx.answerCbQuery('Функция в разработке');
+});
+
+// Обработка ошибок
+bot.catch((err, ctx) => {
+    console.error('❌ Bot error:', err);
+    if (ctx) {
+        ctx.reply('Произошла ошибка. Попробуйте позже или обратитесь в поддержку.')
+            .catch(e => console.error('Failed to send error message:', e));
+    }
+});
+
 // Запуск бота
 bot.launch()
     .then(() => {
