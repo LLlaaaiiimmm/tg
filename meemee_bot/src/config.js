@@ -119,6 +119,7 @@ export const KEYBOARDS = {
         inline_keyboard: [
             [{ text: '🎬 Доступные мемы', callback_data: 'catalog' }],
             [{ text: '💳 Купить видео', callback_data: 'buy' }],
+            [{ text: '👤 Личный кабинет', callback_data: 'profile' }],
             [{ text: '🎁 Приведи друга', callback_data: 'referral' }],
             [{ text: 'ℹ️ О проекте', callback_data: 'about' }]
         ]
