@@ -228,7 +228,22 @@ export async function handlePaymentSuccess(bot, orderId) {
         await userService.addPaidQuota(order.userId, pkg.generations);
         
         // Обрабатываем реферальный кешбэк для эксперта
-        await referralService.processExpertCashback(order.userId, order.amount);
+        const cashbackResult = await referralService.processExpertCashback(order.userId, order.amount);
+        
+        // Если был начислен кешбек, уведомляем эксперта
+        if (cashbackResult) {
+            try {
+                await bot.telegram.sendMessage(
+                    cashbackResult.expertId,
+                    `💰 Новый кешбек!\n\nВаш реферал совершил покупку.\n\n` +
+                    `💵 Сумма покупки: ${cashbackResult.originalAmount}₽\n` +
+                    `🎁 Ваш кешбек (${cashbackResult.percent}%): ${cashbackResult.amount.toFixed(2)}₽\n\n` +
+                    `📊 Общий заработок: ${(await userService.getUser(cashbackResult.expertId))?.totalCashback?.toFixed(2) || 0}₽`
+                );
+            } catch (notifyErr) {
+                console.log(`Failed to notify expert ${cashbackResult.expertId}:`, notifyErr.message);
+            }
+        }
         
         // Отправляем уведомление пользователю
         const keyboard = createAfterPaymentKeyboard();
