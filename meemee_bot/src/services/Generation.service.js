@@ -172,28 +172,57 @@ export class GenerationService {
     }
 
     // Polling для проверки статуса генерации
-    async pollVideoGeneration(operationId, maxAttempts = 60, interval = 5000) {
+    async pollVideoGeneration(operationName, maxAttempts = 60, interval = 5000) {
+        console.log('⏳ Starting polling for operation:', operationName);
+        
         for (let i = 0; i < maxAttempts; i++) {
             try {
                 const response = await axios.get(
-                    `${this.apiUrl}/operations/${operationId}?key=${this.apiKey}`
+                    `${this.apiUrl}/${operationName}?key=${this.apiKey}`,
+                    {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }
                 );
 
-                if (response.data.done) {
+                console.log(`Polling attempt ${i + 1}/${maxAttempts}...`);
+
+                // Проверяем статус операции
+                if (response.data.done === true) {
                     if (response.data.error) {
-                        throw new Error(response.data.error.message);
+                        throw new Error(response.data.error.message || 'Generation failed');
                     }
-                    return response.data.response?.videoUrl;
+                    
+                    // Видео готово
+                    if (response.data.response && response.data.response.candidates) {
+                        const candidate = response.data.response.candidates[0];
+                        if (candidate.content && candidate.content.parts && candidate.content.parts[0].video) {
+                            const videoUri = candidate.content.parts[0].video.uri;
+                            console.log('✅ Video generation completed:', videoUri);
+                            return videoUri;
+                        }
+                    }
+                    
+                    throw new Error('Operation completed but no video found');
                 }
 
+                // Ждём перед следующей попыткой
                 await new Promise(resolve => setTimeout(resolve, interval));
             } catch (err) {
                 console.error(`❌ Polling error: ${err.message}`);
-                throw err;
+                
+                // Если это последняя попытка, пробрасываем ошибку
+                if (i === maxAttempts - 1) {
+                    throw err;
+                }
+                
+                // Иначе ждём и пробуем снова
+                await new Promise(resolve => setTimeout(resolve, interval));
             }
         }
 
-        throw new Error('Video generation timeout');
+        throw new Error('Video generation timeout after ' + (maxAttempts * interval / 1000) + ' seconds');
     }
 
     // Получение генерации
