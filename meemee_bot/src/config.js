@@ -112,7 +112,7 @@ export const MESSAGES = {
         return `⏰ Время оплаты истекло\n\nНе переводите средства (${amount} USDT) на кошелек ${masked}\n\nВыберите другой способ оплаты.`;
     },
 
-    PROFILE: (user, generations) => {
+    PROFILE: (user, generations, referralStats) => {
         let message = `👤 Личный кабинет\n\n`;
         message += `🆔 ID: ${user.userId}\n`;
         message += `📝 Имя: ${user.firstName || 'не указано'}\n\n`;
@@ -124,6 +124,23 @@ export const MESSAGES = {
         message += `├─ ✅ Успешно: ${user.successful_generations || 0}\n`;
         message += `├─ ❌ Ошибок: ${user.failed_generations || 0}\n`;
         message += `└─ 💰 Потрачено: ${user.total_spent || 0}₽\n\n`;
+        
+        // Добавляем реферальную статистику
+        if (referralStats) {
+            if (referralStats.referredUsers > 0 || referralStats.expertReferrals > 0) {
+                message += `🎁 Реферальная программа:\n`;
+                if (referralStats.referredUsers > 0) {
+                    message += `├─ 👥 Приглашено друзей: ${referralStats.referredUsers}\n`;
+                }
+                if (referralStats.expertReferrals > 0) {
+                    message += `├─ 💼 Экспертных рефералов: ${referralStats.expertReferrals}\n`;
+                    message += `└─ 💰 Заработано: ${referralStats.totalCashback?.toFixed(2) || 0}₽\n`;
+                } else if (referralStats.referredUsers > 0) {
+                    message += `└─ 🎁 Получено бонусов: ${referralStats.referredUsers}\n`;
+                }
+                message += '\n';
+            }
+        }
         
         if (generations && generations.length > 0) {
             message += `🎬 Последние генерации:\n`;
