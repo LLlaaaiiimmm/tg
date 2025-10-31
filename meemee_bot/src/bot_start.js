@@ -62,7 +62,7 @@ bot.start(async (ctx) => {
         await userService.createUser(ctx.from, startPayload);
 
         // Отправка приветственного сообщения
-        await ctx.reply(MESSAGES.WELCOME, KEYBOARDS.MAIN_MENU);
+        await ctx.reply(MESSAGES.WELCOME, { reply_markup: KEYBOARDS.MAIN_MENU });
     } catch (err) {
         console.error('❌ Error in /start:', err);
         await ctx.reply('Произошла ошибка. Попробуйте позже.');
