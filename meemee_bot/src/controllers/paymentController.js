@@ -355,12 +355,13 @@ export async function handleProfile(ctx) {
         const userId = ctx.from.id;
         const user = await userService.getUser(userId);
         const generations = await generationService.getUserGenerations(userId);
+        const referralStats = await referralService.getReferralStats(userId);
         
         if (!user) {
             return await ctx.answerCbQuery('Ошибка загрузки профиля', { show_alert: true });
         }
         
-        const message = MESSAGES.PROFILE(user, generations);
+        const message = MESSAGES.PROFILE(user, generations, referralStats);
         
         await ctx.editMessageText(message, {
             reply_markup: {
