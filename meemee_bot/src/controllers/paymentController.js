@@ -194,7 +194,7 @@ export async function handleReferral(ctx) {
         
         await ctx.editMessageText(
             '🎁 Приведи друга за бонус\n\nВыберите тип реферальной ссылки:',
-            REFERRAL_TYPE_KEYBOARD
+            { reply_markup: REFERRAL_TYPE_KEYBOARD }
         );
     } catch (err) {
         console.error('❌ Error in handleReferral:', err);
