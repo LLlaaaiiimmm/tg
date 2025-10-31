@@ -420,39 +420,239 @@ bot.on('text', async (ctx) => {
             await ctx.reply(message, ADMIN_MENU);
             delete ctx.session.waitingForUserId;
             
-        } else if (ctx.session.waitingForBroadcast) {
-            const text = ctx.message.text;
-            const allUsers = await userService.getAllUsers();
-            
-            let success = 0;
-            let failed = 0;
-            
-            await ctx.reply(`📤 Начинаю рассылку ${allUsers.length} пользователям...`);
-            
-            for (const user of allUsers) {
-                try {
-                    // Используем основной бот для отправки сообщений пользователям
-                    await mainBot.telegram.sendMessage(user.userId, text, { parse_mode: 'HTML' });
-                    success++;
-                    
-                    // Задержка чтобы не превысить лимиты Telegram (30 сообщений в секунду)
-                    await new Promise(resolve => setTimeout(resolve, 50));
-                } catch (err) {
-                    failed++;
-                    console.error(`Failed to send to ${user.userId}:`, err.message);
-                }
-            }
+        } else if (ctx.session.broadcastStep === 'text') {
+            // Сохраняем текст рассылки
+            ctx.session.broadcastText = ctx.message.text;
+            ctx.session.broadcastStep = 'photo';
             
             await ctx.reply(
-                `✅ Рассылка завершена!\n\n✔️ Отправлено: ${success}\n❌ Ошибок: ${failed}`,
-                ADMIN_MENU
+                '📢 Рассылка сообщений\n\n🔹 Шаг 2/3: Фото (опционально)\n\nОтправьте фото для рассылки или нажмите "Пропустить"',
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '⏭️ Пропустить фото', callback_data: 'broadcast_skip_photo' }],
+                            [{ text: '🔙 Отмена', callback_data: 'main_menu' }]
+                        ]
+                    }
+                }
             );
             
-            delete ctx.session.waitingForBroadcast;
+        } else if (ctx.session.broadcastStep === 'button_text') {
+            // Сохраняем текст кнопки
+            ctx.session.broadcastButtonText = ctx.message.text;
+            ctx.session.broadcastStep = 'button_url';
+            
+            await ctx.reply(
+                '📢 Рассылка сообщений\n\n🔹 Ссылка кнопки\n\nОтправьте URL ссылки для кнопки\n\nПример: https://t.me/your_channel',
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '🔙 Отмена', callback_data: 'main_menu' }]
+                        ]
+                    }
+                }
+            );
+            
+        } else if (ctx.session.broadcastStep === 'button_url') {
+            // Сохраняем URL кнопки
+            const url = ctx.message.text;
+            
+            // Простая валидация URL
+            try {
+                new URL(url);
+                ctx.session.broadcastButtonUrl = url;
+            } catch (err) {
+                return await ctx.reply('❌ Некорректный URL. Попробуйте ещё раз.');
+            }
+            
+            // Показываем превью и подтверждение
+            await showBroadcastPreview(ctx);
         }
     } catch (err) {
         console.error('❌ Error in text handler:', err);
         await ctx.reply('Произошла ошибка');
+    }
+});
+
+// Обработка фото
+bot.on('photo', async (ctx) => {
+    try {
+        if (!ctx.session) {
+            ctx.session = {};
+        }
+        
+        if (ctx.session.broadcastStep === 'photo') {
+            // Сохраняем ID фото
+            ctx.session.broadcastPhotoId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+            ctx.session.broadcastStep = 'button';
+            
+            await ctx.reply(
+                '📢 Рассылка сообщений\n\n🔹 Шаг 3/3: Кнопка (опционально)\n\nХотите добавить кнопку со ссылкой?',
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '✅ Да, добавить кнопку', callback_data: 'broadcast_add_button' }],
+                            [{ text: '⏭️ Нет, продолжить без кнопки', callback_data: 'broadcast_skip_button' }],
+                            [{ text: '🔙 Отмена', callback_data: 'main_menu' }]
+                        ]
+                    }
+                }
+            );
+        }
+    } catch (err) {
+        console.error('❌ Error in photo handler:', err);
+        await ctx.reply('Произошла ошибка');
+    }
+});
+
+// Callback для пропуска фото
+bot.action('broadcast_skip_photo', async (ctx) => {
+    try {
+        ctx.session.broadcastStep = 'button';
+        
+        await ctx.editMessageText(
+            '📢 Рассылка сообщений\n\n🔹 Шаг 3/3: Кнопка (опционально)\n\nХотите добавить кнопку со ссылкой?',
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '✅ Да, добавить кнопку', callback_data: 'broadcast_add_button' }],
+                        [{ text: '⏭️ Нет, продолжить без кнопки', callback_data: 'broadcast_skip_button' }],
+                        [{ text: '🔙 Отмена', callback_data: 'main_menu' }]
+                    ]
+                }
+            }
+        );
+    } catch (err) {
+        console.error('❌ Error:', err);
+    }
+});
+
+// Callback для добавления кнопки
+bot.action('broadcast_add_button', async (ctx) => {
+    try {
+        ctx.session.broadcastStep = 'button_text';
+        
+        await ctx.editMessageText(
+            '📢 Рассылка сообщений\n\n🔹 Текст кнопки\n\nОтправьте текст, который будет отображаться на кнопке\n\nПример: Перейти в канал',
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '🔙 Отмена', callback_data: 'main_menu' }]
+                    ]
+                }
+            }
+        );
+    } catch (err) {
+        console.error('❌ Error:', err);
+    }
+});
+
+// Callback для пропуска кнопки
+bot.action('broadcast_skip_button', async (ctx) => {
+    try {
+        await showBroadcastPreview(ctx);
+    } catch (err) {
+        console.error('❌ Error:', err);
+    }
+});
+
+// Показ превью и подтверждение рассылки
+async function showBroadcastPreview(ctx) {
+    try {
+        const allUsers = await userService.getAllUsers();
+        
+        let message = '📢 Предпросмотр рассылки\n\n';
+        message += `👥 Получателей: ${allUsers.length}\n\n`;
+        message += '───────────────\n';
+        message += ctx.session.broadcastText;
+        message += '\n───────────────\n\n';
+        
+        if (ctx.session.broadcastPhotoId) {
+            message += '📷 С фото: ДА\n';
+        }
+        
+        if (ctx.session.broadcastButtonText) {
+            message += `🔘 Кнопка: "${ctx.session.broadcastButtonText}"\n`;
+            message += `🔗 Ссылка: ${ctx.session.broadcastButtonUrl}\n`;
+        }
+        
+        message += '\n⚠️ Отправить рассылку?';
+        
+        await ctx.reply(message, {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '✅ Да, отправить', callback_data: 'broadcast_confirm' }],
+                    [{ text: '🔙 Отмена', callback_data: 'main_menu' }]
+                ]
+            }
+        });
+    } catch (err) {
+        console.error('❌ Error in preview:', err);
+        await ctx.reply('Произошла ошибка');
+    }
+}
+
+// Подтверждение и отправка рассылки
+bot.action('broadcast_confirm', async (ctx) => {
+    try {
+        const allUsers = await userService.getAllUsers();
+        const text = ctx.session.broadcastText;
+        const photoId = ctx.session.broadcastPhotoId;
+        const buttonText = ctx.session.broadcastButtonText;
+        const buttonUrl = ctx.session.broadcastButtonUrl;
+        
+        let success = 0;
+        let failed = 0;
+        
+        await ctx.editMessageText(`📤 Начинаю рассылку ${allUsers.length} пользователям...`);
+        
+        for (const user of allUsers) {
+            try {
+                const options = { parse_mode: 'HTML' };
+                
+                // Добавляем кнопку если есть
+                if (buttonText && buttonUrl) {
+                    options.reply_markup = {
+                        inline_keyboard: [
+                            [{ text: buttonText, url: buttonUrl }]
+                        ]
+                    };
+                }
+                
+                // Отправляем с фото или без
+                if (photoId) {
+                    await mainBot.telegram.sendPhoto(user.userId, photoId, {
+                        caption: text,
+                        ...options
+                    });
+                } else {
+                    await mainBot.telegram.sendMessage(user.userId, text, options);
+                }
+                
+                success++;
+                
+                // Задержка чтобы не превысить лимиты Telegram (30 сообщений в секунду)
+                await new Promise(resolve => setTimeout(resolve, 50));
+            } catch (err) {
+                failed++;
+                console.error(`Failed to send to ${user.userId}:`, err.message);
+            }
+        }
+        
+        await ctx.reply(
+            `✅ Рассылка завершена!\n\n✔️ Отправлено: ${success}\n❌ Ошибок: ${failed}`,
+            ADMIN_MENU
+        );
+        
+        // Очищаем сессию
+        delete ctx.session.broadcastStep;
+        delete ctx.session.broadcastText;
+        delete ctx.session.broadcastPhotoId;
+        delete ctx.session.broadcastButtonText;
+        delete ctx.session.broadcastButtonUrl;
+    } catch (err) {
+        console.error('❌ Error in broadcast confirm:', err);
+        await ctx.reply('Произошла ошибка при рассылке');
     }
 });
 
