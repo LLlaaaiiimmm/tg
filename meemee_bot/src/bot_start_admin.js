@@ -379,7 +379,10 @@ bot.action('export_generations', async (ctx) => {
 // Обработка текстовых сообщений
 bot.on('text', async (ctx) => {
     try {
-        ctx.session = ctx.session || {};
+        // Инициализируем сессию если её нет
+        if (!ctx.session) {
+            ctx.session = {};
+        }
         
         if (ctx.session.waitingForUserId) {
             const userId = parseInt(ctx.message.text);
@@ -417,10 +420,11 @@ bot.on('text', async (ctx) => {
             
             for (const user of allUsers) {
                 try {
-                    await bot.telegram.sendMessage(user.userId, text);
+                    // Используем основной бот для отправки сообщений пользователям
+                    await bot.telegram.sendMessage(user.userId, text, { parse_mode: 'HTML' });
                     success++;
                     
-                    // Задержка чтобы не превысить лимиты Telegram
+                    // Задержка чтобы не превысить лимиты Telegram (30 сообщений в секунду)
                     await new Promise(resolve => setTimeout(resolve, 50));
                 } catch (err) {
                     failed++;
@@ -429,7 +433,7 @@ bot.on('text', async (ctx) => {
             }
             
             await ctx.reply(
-                `✅ Рассылка завершена!\n\nОтправлено: ${success}\nОшибок: ${failed}`,
+                `✅ Рассылка завершена!\n\n✔️ Отправлено: ${success}\n❌ Ошибок: ${failed}`,
                 ADMIN_MENU
             );
             
