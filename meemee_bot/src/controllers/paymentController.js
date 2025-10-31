@@ -114,7 +114,7 @@ export async function handleChainSelect(ctx, crypto, chain) {
         
         await ctx.editMessageText(message, {
             parse_mode: 'HTML',
-            reply_markup: keyboard
+            reply_markup: keyboard.inline_keyboard
         });
     } catch (err) {
         console.error('❌ Error in handleChainSelect:', err);
