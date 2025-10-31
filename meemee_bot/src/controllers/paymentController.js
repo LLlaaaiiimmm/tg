@@ -261,3 +261,81 @@ export async function handleRefExpert(ctx) {
 export async function handlePayStarsSoon(ctx) {
     await ctx.answerCbQuery('⭐ Telegram Stars скоро будут доступны!', { show_alert: true });
 }
+
+// Обработчик личного кабинета
+export async function handleProfile(ctx) {
+    try {
+        const userId = ctx.from.id;
+        const user = await userService.getUser(userId);
+        const generations = await generationService.getUserGenerations(userId);
+        
+        if (!user) {
+            return await ctx.answerCbQuery('Ошибка загрузки профиля', { show_alert: true });
+        }
+        
+        const message = MESSAGES.PROFILE(user, generations);
+        
+        await ctx.editMessageText(message, {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '📜 История генераций', callback_data: 'profile_history' }],
+                    [{ text: '💳 Купить видео', callback_data: 'buy' }],
+                    [{ text: '🔙 Главное меню', callback_data: 'main_menu' }]
+                ]
+            }
+        });
+    } catch (err) {
+        console.error('❌ Error in handleProfile:', err);
+        await ctx.answerCbQuery('Произошла ошибка');
+    }
+}
+
+// Обработчик истории генераций
+export async function handleProfileHistory(ctx) {
+    try {
+        const userId = ctx.from.id;
+        const generations = await generationService.getUserGenerations(userId);
+        
+        if (!generations || generations.length === 0) {
+            return await ctx.editMessageText(
+                '📜 История генераций пуста\n\nВы ещё не создали ни одного видео.',
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '🎬 Создать видео', callback_data: 'catalog' }],
+                            [{ text: '🔙 Назад', callback_data: 'profile' }]
+                        ]
+                    }
+                }
+            );
+        }
+        
+        let message = '📜 История генераций:\n\n';
+        
+        generations.forEach((gen, idx) => {
+            const statusEmoji = gen.status === 'done' ? '✅' : gen.status === 'failed' ? '❌' : gen.status === 'processing' ? '⏳' : '🕐';
+            const date = new Date(gen.createdAt).toLocaleString('ru-RU');
+            message += `${idx + 1}. ${statusEmoji} ${gen.memeName}\n`;
+            message += `   👤 Имя: ${gen.name} (${gen.gender === 'male' ? 'М' : 'Ж'})\n`;
+            message += `   📅 ${date}\n`;
+            
+            if (gen.status === 'failed' && gen.error) {
+                message += `   ⚠️ Ошибка: ${gen.error}\n`;
+            }
+            message += '\n';
+        });
+        
+        // Создаём кнопки для пагинации если много генераций
+        const keyboard = {
+            inline_keyboard: [
+                [{ text: '🔙 Назад в профиль', callback_data: 'profile' }],
+                [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
+            ]
+        };
+        
+        await ctx.editMessageText(message, { reply_markup: keyboard });
+    } catch (err) {
+        console.error('❌ Error in handleProfileHistory:', err);
+        await ctx.answerCbQuery('Произошла ошибка');
+    }
+}
