@@ -48,10 +48,13 @@ bot.start(async (ctx) => {
         const startPayload = ctx.startPayload;
 
         // Создание пользователя (перед обработкой реферала)
-        const user = await userService.createUser(ctx.from, startPayload);
-        const isNewUser = !user || user.createdAt === user.updatedAt;
+        const existingUser = await userService.getUser(userId);
+        await userService.createUser(ctx.from, startPayload);
+        const isNewUser = !existingUser;
 
-        // Обработка реферальных ссылок
+        let showWelcome = true;
+
+        // Обработка реферальных ссылок (только для новых пользователей)
         if (startPayload && isNewUser) {
             if (startPayload.startsWith('ref_')) {
                 const referrerId = parseInt(startPayload.replace('ref_', ''));
@@ -60,9 +63,9 @@ bot.start(async (ctx) => {
                 if (success) {
                     // Уведомляем нового пользователя о бонусе
                     await ctx.reply(
-                        `🎉 Вы получили +${REFERRAL_BONUS} бесплатную генерацию за переход по реферальной ссылке!`,
-                        { reply_markup: KEYBOARDS.MAIN_MENU }
+                        `🎉 Добро пожаловать!\n\nВы получили +${REFERRAL_BONUS} бесплатную генерацию за переход по реферальной ссылке!`
                     );
+                    showWelcome = false;
                     
                     // Уведомляем реферера
                     try {
@@ -92,9 +95,12 @@ bot.start(async (ctx) => {
             }
         }
 
-        // Отправка приветственного сообщения (если ещё не отправили)
-        if (!startPayload || !isNewUser || !(startPayload.startsWith('ref_') && await referralService.processUserReferral)) {
+        // Отправка приветственного сообщения
+        if (showWelcome) {
             await ctx.reply(MESSAGES.WELCOME, { reply_markup: KEYBOARDS.MAIN_MENU });
+        } else {
+            // Если уже отправили уведомление о реферале, просто отправляем меню
+            await ctx.reply('Выберите действие:', { reply_markup: KEYBOARDS.MAIN_MENU });
         }
     } catch (err) {
         console.error('❌ Error in /start:', err);
