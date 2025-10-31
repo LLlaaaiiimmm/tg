@@ -114,38 +114,59 @@ export class GenerationService {
                 throw new Error('Google Veo3 API key not configured');
             }
 
-            // Пример запроса - нужно адаптировать под реальный API
-            // Документация: https://labs.google/flow/about
+            console.log('🎬 Starting video generation with Veo3...');
+            console.log('Prompt:', prompt);
+
+            // Реальный API запрос к Google Veo 3.1
             const response = await axios.post(
-                `${this.apiUrl}/models/veo:generateVideo?key=${this.apiKey}`,
+                `${this.apiUrl}/models/${this.modelName}:generateContent?key=${this.apiKey}`,
                 {
-                    prompt: prompt,
-                    parameters: {
-                        duration: 5,
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }],
+                    generationConfig: {
+                        responseCount: 1,
                         aspectRatio: '16:9',
-                        quality: 'high'
+                        duration: 5
                     }
                 },
                 {
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    timeout: 180000 // 3 минуты
+                    timeout: 300000 // 5 минут
                 }
             );
 
-            if (response.data && response.data.videoUrl) {
-                return response.data.videoUrl;
+            console.log('API Response:', JSON.stringify(response.data, null, 2));
+
+            // Обработка ответа
+            if (response.data && response.data.candidates && response.data.candidates.length > 0) {
+                const candidate = response.data.candidates[0];
+                
+                // Если видео готово сразу
+                if (candidate.content && candidate.content.parts && candidate.content.parts[0].video) {
+                    const videoUri = candidate.content.parts[0].video.uri;
+                    console.log('✅ Video URL received:', videoUri);
+                    return videoUri;
+                }
+                
+                // Если есть operation ID для polling
+                if (response.data.name || response.data.operation) {
+                    const operationName = response.data.name || response.data.operation;
+                    console.log('⏳ Operation started:', operationName);
+                    return await this.pollVideoGeneration(operationName);
+                }
             }
 
-            // Если генерация асинхронная, может потребоваться polling
-            if (response.data && response.data.operationId) {
-                return await this.pollVideoGeneration(response.data.operationId);
-            }
-
-            throw new Error('Invalid API response');
+            throw new Error('Invalid API response: no video or operation ID');
         } catch (err) {
             console.error(`❌ Video generation error: ${err.message}`);
+            if (err.response) {
+                console.error('API Error Response:', err.response.data);
+            }
             throw err;
         }
     }
