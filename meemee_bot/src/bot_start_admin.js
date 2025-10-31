@@ -10,7 +10,15 @@ if (!process.env.BOT_TOKEN_ADMIN) {
     process.exit(1);
 }
 
+if (!process.env.BOT_TOKEN) {
+    console.error('❌ BOT_TOKEN not found in .env file (needed for broadcast)');
+    process.exit(1);
+}
+
 const bot = new Telegraf(process.env.BOT_TOKEN_ADMIN);
+// Создаём отдельный экземпляр для рассылки через основной бот
+const mainBot = new Telegraf(process.env.BOT_TOKEN);
+
 const userService = new UserService();
 const orderService = new OrderService();
 const generationService = new GenerationService();
