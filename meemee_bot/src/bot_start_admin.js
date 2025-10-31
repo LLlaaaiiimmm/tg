@@ -441,6 +441,22 @@ bot.on('text', async (ctx) => {
     }
 });
 
+// Обработка неизвестных callback (для отладки)
+bot.on('callback_query', async (ctx) => {
+    const callbackData = ctx.callbackQuery.data;
+    console.log('⚠️ Unhandled admin callback:', callbackData);
+    await ctx.answerCbQuery('Функция в разработке');
+});
+
+// Обработка ошибок
+bot.catch((err, ctx) => {
+    console.error('❌ Admin bot error:', err);
+    if (ctx) {
+        ctx.reply('Произошла ошибка. Попробуйте позже.')
+            .catch(e => console.error('Failed to send error message:', e));
+    }
+});
+
 // Запуск бота
 bot.launch()
     .then(() => {
