@@ -116,10 +116,12 @@ bot.action(/meme_(.+)/, async (ctx) => {
         
         if (!hasQuota) {
             await ctx.editMessageText(MESSAGES.NO_QUOTA, {
-                inline_keyboard: [
-                    [{ text: '💳 Купить видео', callback_data: 'buy' }],
-                    [{ text: '🔙 Назад', callback_data: 'catalog' }]
-                ]
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '💳 Купить видео', callback_data: 'buy' }],
+                        [{ text: '🔙 Назад', callback_data: 'catalog' }]
+                    ]
+                }
             });
             return;
         }
@@ -130,9 +132,11 @@ bot.action(/meme_(.+)/, async (ctx) => {
         
         // Запрашиваем имя
         await ctx.editMessageText(MESSAGES.ENTER_NAME, {
-            inline_keyboard: [
-                [{ text: '🔙 Назад', callback_data: 'catalog' }]
-            ]
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '🔙 Назад', callback_data: 'catalog' }]
+                ]
+            }
         });
         
         // Устанавливаем флаг ожидания ввода имени
