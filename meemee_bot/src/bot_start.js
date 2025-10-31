@@ -323,8 +323,18 @@ import * as paymentController from './controllers/paymentController.js';
 // Обработка кнопки "Купить видео"
 bot.action('buy', (ctx) => paymentController.handleBuy(ctx));
 
+// Обработка выбора пакета
+bot.action(/select_package_(.+)/, (ctx) => {
+    const packageKey = ctx.match[1];
+    paymentController.handleSelectPackage(ctx, packageKey);
+});
+
 // Обработка кнопки "О проекте"
 bot.action('about', (ctx) => paymentController.handleAbout(ctx));
+
+// Обработка личного кабинета
+bot.action('profile', (ctx) => paymentController.handleProfile(ctx));
+bot.action('profile_history', (ctx) => paymentController.handleProfileHistory(ctx));
 
 // Обработка реферальной программы
 bot.action('referral', (ctx) => paymentController.handleReferral(ctx));
@@ -332,21 +342,29 @@ bot.action('ref_user', (ctx) => paymentController.handleRefUser(ctx));
 bot.action('ref_expert', (ctx) => paymentController.handleRefExpert(ctx));
 
 // Обработка оплаты
-bot.action('pay_card', (ctx) => paymentController.handlePayCard(ctx));
-bot.action('pay_crypto', (ctx) => paymentController.handlePayCrypto(ctx));
+bot.action(/pay_card_(.+)/, (ctx) => {
+    const packageKey = ctx.match[1];
+    paymentController.handlePayCard(ctx, packageKey);
+});
+bot.action(/pay_crypto_(.+)/, (ctx) => {
+    const packageKey = ctx.match[1];
+    paymentController.handlePayCrypto(ctx, packageKey);
+});
 bot.action('pay_stars', (ctx) => paymentController.handlePayStarsSoon(ctx));
 
 // Обработка выбора криптовалюты
-bot.action(/crypto_(\w+)/, (ctx) => {
+bot.action(/crypto_(\w+)_(.+)/, (ctx) => {
     const crypto = ctx.match[1];
-    paymentController.handleCryptoSelect(ctx, crypto);
+    const packageKey = ctx.match[2];
+    paymentController.handleCryptoSelect(ctx, crypto, packageKey);
 });
 
 // Обработка выбора сети
-bot.action(/chain_(\w+)_(.+)/, (ctx) => {
+bot.action(/chain_(\w+)_(.+)_(.+)/, (ctx) => {
     const crypto = ctx.match[1];
     const chain = ctx.match[2];
-    paymentController.handleChainSelect(ctx, crypto, chain);
+    const packageKey = ctx.match[3];
+    paymentController.handleChainSelect(ctx, crypto, chain, packageKey);
 });
 
 // Обработка проверки платежа
