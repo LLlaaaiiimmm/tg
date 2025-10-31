@@ -175,7 +175,7 @@ bot.on('text', async (ctx) => {
             ctx.session.generationName = name;
             ctx.session.waitingFor = 'gender';
             
-            await ctx.reply(MESSAGES.CHOOSE_GENDER, KEYBOARDS.GENDER_CHOICE);
+            await ctx.reply(MESSAGES.CHOOSE_GENDER, { reply_markup: KEYBOARDS.GENDER_CHOICE });
             
         } else if (ctx.session.waitingFor === 'email') {
             // Обработка ввода email для оплаты картой
