@@ -89,7 +89,7 @@ bot.action(/catalog.*/, async (ctx) => {
         }
         
         const keyboard = createCatalogKeyboard(page);
-        await ctx.editMessageText(MESSAGES.MEMES_CATALOG, keyboard);
+        await ctx.editMessageText(MESSAGES.MEMES_CATALOG, { reply_markup: keyboard });
     } catch (err) {
         console.error('❌ Error in catalog:', err);
         await ctx.answerCbQuery('Произошла ошибка');
