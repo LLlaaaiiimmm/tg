@@ -5,12 +5,14 @@ import { PaymentFiatService } from '../services/PaymentFiat.service.js';
 import { UserService } from '../services/User.service.js';
 import { OrderService } from '../services/Order.service.js';
 import { ReferralService } from '../services/Referral.service.js';
+import { GenerationService } from '../services/Generation.service.js';
 
 const paymentCryptoService = new PaymentCryptoService();
 const paymentFiatService = new PaymentFiatService();
 const userService = new UserService();
 const orderService = new OrderService();
 const referralService = new ReferralService();
+const generationService = new GenerationService();
 
 // Обработчик "Купить видео"
 export async function handleBuy(ctx) {
