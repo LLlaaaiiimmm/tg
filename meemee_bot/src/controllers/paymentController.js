@@ -124,15 +124,23 @@ export async function handlePayCrypto(ctx, packageKey = 'single') {
 }
 
 // Обработчик выбора криптовалюты
-export async function handleCryptoSelect(ctx, crypto) {
+export async function handleCryptoSelect(ctx, crypto, packageKey = 'single') {
     try {
         const chains = SUPPORTED_CRYPTO[crypto];
         if (!chains || chains.length === 0) {
             return await ctx.answerCbQuery('Эта криптовалюта временно недоступна');
         }
         
-        const keyboard = createChainKeyboard(crypto, chains);
-        await ctx.editMessageText(`Выберите сеть для ${crypto}:`, { reply_markup: keyboard });
+        ctx.session = ctx.session || {};
+        ctx.session.selectedPackage = packageKey;
+        
+        const pkg = PACKAGES[packageKey];
+        const keyboard = createChainKeyboard(crypto, chains, packageKey);
+        
+        await ctx.editMessageText(
+            `${pkg.emoji} ${pkg.title}: ${pkg.usdt} USDT\n\nВыберите сеть для ${crypto}:`,
+            { reply_markup: keyboard }
+        );
     } catch (err) {
         console.error('❌ Error in handleCryptoSelect:', err);
         await ctx.answerCbQuery('Произошла ошибка');
@@ -140,17 +148,18 @@ export async function handleCryptoSelect(ctx, crypto) {
 }
 
 // Обработчик выбора сети
-export async function handleChainSelect(ctx, crypto, chain) {
+export async function handleChainSelect(ctx, crypto, chain, packageKey = 'single') {
     try {
         const userId = ctx.from.id;
         const payCurrency = chain.replace(/_/g, ' ');
+        const pkg = PACKAGES[packageKey];
         
         // Создаём платёж
         const payment = await paymentCryptoService.createPayment({
             userId,
-            amount: PACKAGES.single.usdt,
+            amount: pkg.usdt,
             payCurrency,
-            package: 'single'
+            package: packageKey
         });
         
         if (payment.error) {
@@ -159,7 +168,8 @@ export async function handleChainSelect(ctx, crypto, chain) {
         
         const { address, amount, destinationTag } = payment.output;
         
-        let message = `💎 Отправьте <code>${amount}</code> ${crypto}\n\n`;
+        let message = `${pkg.emoji} ${pkg.title}\n\n`;
+        message += `💎 Отправьте <code>${amount}</code> ${crypto}\n\n`;
         message += `📍 На адрес:\n<code>${address}</code>\n\n`;
         
         if (destinationTag) {
