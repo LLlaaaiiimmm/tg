@@ -11,9 +11,9 @@ const __dirname = path.dirname(__filename);
 export class GenerationService {
     constructor() {
         this.apiKey = process.env.GOOGLE_VEO3_API_KEY;
-        this.projectId = process.env.GOOGLE_VEO3_PROJECT_ID;
-        // Базовый URL для Google Veo3 API (нужно уточнить по документации)
+        // Google Veo 3.1 API endpoint (через Gemini API)
         this.apiUrl = `https://generativelanguage.googleapis.com/v1beta`;
+        this.modelName = 'veo-3.1-generate-preview';
     }
 
     // Загрузка промпта мема
