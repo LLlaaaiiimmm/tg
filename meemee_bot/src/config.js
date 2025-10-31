@@ -9,7 +9,37 @@ export const PACKAGES = {
         usdt: 5.8,
         rub: 580,
         stars: 100,
-        offerIdLava: 'YOUR_LAVA_OFFER_ID_HERE'
+        offerIdLava: 'YOUR_LAVA_OFFER_ID_SINGLE'
+    },
+    pack_10: {
+        title: '10 видео',
+        emoji: '📦',
+        generations: 10,
+        usdt: 50,
+        rub: 5000,
+        stars: 900,
+        discount: '15%',
+        offerIdLava: 'YOUR_LAVA_OFFER_ID_PACK10'
+    },
+    pack_100: {
+        title: '100 видео',
+        emoji: '🎁',
+        generations: 100,
+        usdt: 400,
+        rub: 40000,
+        stars: 7500,
+        discount: '30%',
+        offerIdLava: 'YOUR_LAVA_OFFER_ID_PACK100'
+    },
+    pack_300: {
+        title: '300 видео',
+        emoji: '💎',
+        generations: 300,
+        usdt: 1000,
+        rub: 100000,
+        stars: 20000,
+        discount: '40%',
+        offerIdLava: 'YOUR_LAVA_OFFER_ID_PACK300'
     }
 };
 
