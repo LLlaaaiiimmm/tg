@@ -166,7 +166,7 @@ export async function handlePaymentSuccess(bot, orderId) {
         await bot.telegram.sendMessage(
             order.userId,
             MESSAGES.PAYMENT_SUCCESS,
-            { reply_markup: keyboard }
+            { reply_markup: keyboard.inline_keyboard }
         );
         
         console.log(`✅ Payment ${orderId} processed successfully`);
