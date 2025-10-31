@@ -432,7 +432,7 @@ bot.on('text', async (ctx) => {
             for (const user of allUsers) {
                 try {
                     // Используем основной бот для отправки сообщений пользователям
-                    await bot.telegram.sendMessage(user.userId, text, { parse_mode: 'HTML' });
+                    await mainBot.telegram.sendMessage(user.userId, text, { parse_mode: 'HTML' });
                     success++;
                     
                     // Задержка чтобы не превысить лимиты Telegram (30 сообщений в секунду)
