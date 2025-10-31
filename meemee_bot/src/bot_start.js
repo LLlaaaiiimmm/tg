@@ -334,7 +334,7 @@ bot.action('ref_expert', (ctx) => paymentController.handleRefExpert(ctx));
 // Обработка оплаты
 bot.action('pay_card', (ctx) => paymentController.handlePayCard(ctx));
 bot.action('pay_crypto', (ctx) => paymentController.handlePayCrypto(ctx));
-bot.action('pay_stars_soon', (ctx) => paymentController.handlePayStarsSoon(ctx));
+bot.action('pay_stars', (ctx) => paymentController.handlePayStarsSoon(ctx));
 
 // Обработка выбора криптовалюты
 bot.action(/crypto_(\w+)/, (ctx) => {
