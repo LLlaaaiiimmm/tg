@@ -30,6 +30,9 @@ const paymentFiatService = new PaymentFiatService();
 const generationService = new GenerationService();
 const referralService = new ReferralService();
 
+// Session middleware
+bot.use(session());
+
 // Middleware для логирования
 bot.use(async (ctx, next) => {
     const start = Date.now();
