@@ -235,6 +235,144 @@ bot.action('broadcast', async (ctx) => {
     }
 });
 
+// Экспорт отчётов
+bot.action('export_reports', async (ctx) => {
+    try {
+        await ctx.editMessageText(
+            '📥 Экспорт отчётов\n\nВыберите тип отчёта:',
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '👥 Пользователи', callback_data: 'export_users' }],
+                        [{ text: '💳 Платежи', callback_data: 'export_payments' }],
+                        [{ text: '🎬 Генерации', callback_data: 'export_generations' }],
+                        [{ text: '🔙 Назад', callback_data: 'main_menu' }]
+                    ]
+                }
+            }
+        );
+    } catch (err) {
+        console.error('❌ Error in export_reports:', err);
+        await ctx.answerCbQuery('Ошибка');
+    }
+});
+
+// Экспорт пользователей
+bot.action('export_users', async (ctx) => {
+    try {
+        await ctx.answerCbQuery('Подготовка отчёта...');
+        const allUsers = await userService.getAllUsers();
+        
+        let csvData = 'User ID,Username,First Name,Free Quota,Paid Quota,Total Spent,Successful Generations,Failed Generations,Created At\n';
+        
+        for (const user of allUsers) {
+            csvData += `${user.userId},`;
+            csvData += `${user.username || ''},`;
+            csvData += `${user.firstName || ''},`;
+            csvData += `${user.free_quota || 0},`;
+            csvData += `${user.paid_quota || 0},`;
+            csvData += `${user.total_spent || 0},`;
+            csvData += `${user.successful_generations || 0},`;
+            csvData += `${user.failed_generations || 0},`;
+            csvData += `${user.createdAt || ''}\n`;
+        }
+        
+        // Отправляем как документ
+        await ctx.replyWithDocument(
+            {
+                source: Buffer.from(csvData, 'utf-8'),
+                filename: `users_export_${new Date().toISOString().split('T')[0]}.csv`
+            },
+            { caption: `📊 Отчёт по пользователям\nВсего: ${allUsers.length}` }
+        );
+        
+        await ctx.reply('✅ Отчёт готов!', ADMIN_MENU);
+    } catch (err) {
+        console.error('❌ Error exporting users:', err);
+        await ctx.reply('❌ Ошибка при экспорте');
+    }
+});
+
+// Экспорт платежей
+bot.action('export_payments', async (ctx) => {
+    try {
+        await ctx.answerCbQuery('Подготовка отчёта...');
+        const allOrders = await orderService.getAllOrders();
+        
+        let csvData = 'Order ID,User ID,Amount,Package,Method,Status,Paid,Created At\n';
+        
+        for (const order of allOrders) {
+            csvData += `${order.orderId},`;
+            csvData += `${order.userId},`;
+            csvData += `${order.amount || 0},`;
+            csvData += `${order.package || ''},`;
+            csvData += `${order.isFiat ? 'Card' : 'Crypto'},`;
+            csvData += `${order.status || ''},`;
+            csvData += `${order.isPaid ? 'Yes' : 'No'},`;
+            csvData += `${order.createdAt || ''}\n`;
+        }
+        
+        await ctx.replyWithDocument(
+            {
+                source: Buffer.from(csvData, 'utf-8'),
+                filename: `payments_export_${new Date().toISOString().split('T')[0]}.csv`
+            },
+            { caption: `💳 Отчёт по платежам\nВсего: ${allOrders.length}` }
+        );
+        
+        await ctx.reply('✅ Отчёт готов!', ADMIN_MENU);
+    } catch (err) {
+        console.error('❌ Error exporting payments:', err);
+        await ctx.reply('❌ Ошибка при экспорте');
+    }
+});
+
+// Экспорт генераций
+bot.action('export_generations', async (ctx) => {
+    try {
+        await ctx.answerCbQuery('Подготовка отчёта...');
+        
+        // Получаем все генерации из Redis
+        const redis = (await import('../redis.js')).default;
+        const allKeys = await redis.keys('generation:*');
+        const generations = [];
+        
+        for (const key of allKeys) {
+            const gen = await redis.get(key);
+            if (gen) {
+                generations.push(JSON.parse(gen));
+            }
+        }
+        
+        let csvData = 'Generation ID,User ID,Meme ID,Meme Name,Name,Gender,Status,Created At,Updated At\n';
+        
+        for (const gen of generations) {
+            csvData += `${gen.generationId},`;
+            csvData += `${gen.userId},`;
+            csvData += `${gen.memeId},`;
+            csvData += `${gen.memeName || ''},`;
+            csvData += `${gen.name || ''},`;
+            csvData += `${gen.gender || ''},`;
+            csvData += `${gen.status || ''},`;
+            csvData += `${gen.createdAt || ''},`;
+            csvData += `${gen.updatedAt || ''}\n`;
+        }
+        
+        await ctx.replyWithDocument(
+            {
+                source: Buffer.from(csvData, 'utf-8'),
+                filename: `generations_export_${new Date().toISOString().split('T')[0]}.csv`
+            },
+            { caption: `🎬 Отчёт по генерациям\nВсего: ${generations.length}` }
+        );
+        
+        await ctx.reply('✅ Отчёт готов!', ADMIN_MENU);
+    } catch (err) {
+        console.error('❌ Error exporting generations:', err);
+        await ctx.reply('❌ Ошибка при экспорте');
+    }
+});
+
 // Обработка текстовых сообщений
 bot.on('text', async (ctx) => {
     try {
