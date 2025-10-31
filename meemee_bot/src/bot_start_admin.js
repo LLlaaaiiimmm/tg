@@ -231,14 +231,14 @@ bot.action('broadcast', async (ctx) => {
         if (!ctx.session) {
             ctx.session = {};
         }
-        ctx.session.waitingForBroadcast = true;
+        ctx.session.broadcastStep = 'text';
         
         await ctx.editMessageText(
-            '📢 Рассылка сообщений\n\nОтправьте текст сообщения для рассылки всем пользователям.\n\n⚠️ Используйте осторожно!',
+            '📢 Рассылка сообщений\n\n🔹 Шаг 1/3: Текст\n\nОтправьте текст сообщения для рассылки всем пользователям.\n\n💡 Используйте HTML разметку:\n<b>жирный</b>, <i>курсив</i>, <code>код</code>',
             {
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: '🔙 Назад', callback_data: 'main_menu' }]
+                        [{ text: '🔙 Отмена', callback_data: 'main_menu' }]
                     ]
                 }
             }
