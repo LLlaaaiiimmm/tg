@@ -15,6 +15,9 @@ const userService = new UserService();
 const orderService = new OrderService();
 const generationService = new GenerationService();
 
+// Session middleware
+bot.use(session());
+
 // Middleware для проверки админа
 bot.use(async (ctx, next) => {
     const userId = ctx.from?.id;
