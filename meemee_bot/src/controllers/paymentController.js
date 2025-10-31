@@ -319,7 +319,10 @@ export async function handleRefExpert(ctx) {
         
         const stats = await referralService.getReferralStats(userId);
         
-        let message = MESSAGES.EXPERT_REFERRAL_INFO(50) + `\n\n${refLink}\n\n`;
+        // Импортируем процент из конфига
+        const { EXPERT_CASHBACK_PERCENT } = await import('../config.js');
+        
+        let message = MESSAGES.EXPERT_REFERRAL_INFO(EXPERT_CASHBACK_PERCENT) + `\n\n${refLink}\n\n`;
         message += `📊 Статистика:\n`;
         message += `👥 Приглашено: ${stats.expertReferrals}\n`;
         message += `💰 Заработано: ${stats.totalCashback?.toFixed(2) || 0}₽`;
