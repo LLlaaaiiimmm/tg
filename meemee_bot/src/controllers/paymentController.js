@@ -17,18 +17,64 @@ const generationService = new GenerationService();
 // Обработчик "Купить видео"
 export async function handleBuy(ctx) {
     try {
-        await ctx.editMessageText(MESSAGES.CHOOSE_PAYMENT, {
+        // Создаём кнопки для всех пакетов
+        const packageButtons = Object.keys(PACKAGES).map(key => {
+            const pkg = PACKAGES[key];
+            const discount = pkg.discount ? ` 🔥 -${pkg.discount}` : '';
+            return [{
+                text: `${pkg.emoji} ${pkg.title} - ${pkg.rub}₽${discount}`,
+                callback_data: `select_package_${key}`
+            }];
+        });
+        
+        await ctx.editMessageText(MESSAGES.CHOOSE_PACKAGE, {
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: '💵 Карта', callback_data: 'pay_card' }],
-                    [{ text: '💎 Крипта', callback_data: 'pay_crypto' }],
-                    [{ text: '⭐ Stars (скоро)', callback_data: 'pay_stars_soon' }],
+                    ...packageButtons,
                     [{ text: '🔙 Назад', callback_data: 'main_menu' }]
                 ]
             }
         });
     } catch (err) {
         console.error('❌ Error in handleBuy:', err);
+        await ctx.answerCbQuery('Произошла ошибка');
+    }
+}
+
+// Обработчик выбора пакета
+export async function handleSelectPackage(ctx, packageKey) {
+    try {
+        const pkg = PACKAGES[packageKey];
+        if (!pkg) {
+            return await ctx.answerCbQuery('Пакет не найден', { show_alert: true });
+        }
+        
+        // Сохраняем выбранный пакет в сессии
+        ctx.session = ctx.session || {};
+        ctx.session.selectedPackage = packageKey;
+        
+        let message = `${pkg.emoji} ${pkg.title}\n\n`;
+        message += `💎 Генераций: ${pkg.generations}\n`;
+        message += `💰 Цена: ${pkg.rub}₽ / ${pkg.usdt} USDT\n`;
+        if (pkg.discount) {
+            message += `🔥 Скидка: ${pkg.discount}\n`;
+        }
+        const pricePerVideo = (pkg.rub / pkg.generations).toFixed(2);
+        message += `\n📊 Цена за 1 видео: ${pricePerVideo}₽\n\n`;
+        message += `Выберите способ оплаты:`;
+        
+        await ctx.editMessageText(message, {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '💵 Карта', callback_data: `pay_card_${packageKey}` }],
+                    [{ text: '💎 Крипта', callback_data: `pay_crypto_${packageKey}` }],
+                    [{ text: '⭐ Stars (скоро)', callback_data: 'pay_stars_soon' }],
+                    [{ text: '🔙 Назад', callback_data: 'buy' }]
+                ]
+            }
+        });
+    } catch (err) {
+        console.error('❌ Error in handleSelectPackage:', err);
         await ctx.answerCbQuery('Произошла ошибка');
     }
 }
