@@ -178,7 +178,7 @@ export async function handlePaymentSuccess(bot, orderId) {
 // Обработчик "О проекте"
 export async function handleAbout(ctx) {
     try {
-        await ctx.editMessageText(MESSAGES.ABOUT, ABOUT_KEYBOARD);
+        await ctx.editMessageText(MESSAGES.ABOUT, { reply_markup: ABOUT_KEYBOARD });
     } catch (err) {
         console.error('❌ Error in handleAbout:', err);
         await ctx.answerCbQuery('Произошла ошибка');
