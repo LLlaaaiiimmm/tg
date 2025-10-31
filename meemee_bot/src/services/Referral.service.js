@@ -26,6 +26,13 @@ export class ReferralService {
                 return false;
             }
 
+            // Проверка: новый пользователь уже использовал реферальную ссылку?
+            const existingReferrer = await redis.get(`user_referrer:${newUserId}`);
+            if (existingReferrer) {
+                console.log(`⚠️ User ${newUserId} already used referral from ${existingReferrer}`);
+                return false;
+            }
+
             const referrer = await this.userService.getUser(referrerId);
             if (!referrer) {
                 console.log(`⚠️ Referrer ${referrerId} not found`);
@@ -38,6 +45,9 @@ export class ReferralService {
                 return false;
             }
 
+            // Сохраняем связь пользователь-реферер (навсегда)
+            await redis.set(`user_referrer:${newUserId}`, referrerId);
+
             // Добавляем бонусную генерацию рефереру
             await this.userService.addFreeQuota(referrerId, REFERRAL_BONUS);
 
@@ -49,6 +59,9 @@ export class ReferralService {
             await this.userService.updateUser(referrerId, { 
                 referredUsers: updatedReferredUsers 
             });
+
+            // Логируем для антиабуз анализа
+            await this.logReferralActivity(referrerId, newUserId);
 
             console.log(`✅ User referral processed: ${referrerId} -> ${newUserId}`);
             return true;
@@ -66,13 +79,20 @@ export class ReferralService {
                 return false;
             }
 
+            // Проверка: новый пользователь уже использовал экспертную ссылку?
+            const existingExpert = await redis.get(`expert_referral:${newUserId}`);
+            if (existingExpert) {
+                console.log(`⚠️ User ${newUserId} already used expert referral from ${existingExpert}`);
+                return false;
+            }
+
             const expert = await this.userService.getUser(expertId);
             if (!expert) {
                 console.log(`⚠️ Expert ${expertId} not found`);
                 return false;
             }
 
-            // Сохраняем связь эксперт-реферал
+            // Сохраняем связь эксперт-реферал (навсегда)
             await redis.set(`expert_referral:${newUserId}`, expertId);
 
             // Обновляем список экспертных рефералов
@@ -81,11 +101,55 @@ export class ReferralService {
                 expertReferrals: updatedExpertReferrals 
             });
 
+            // Логируем для антиабуз анализа
+            await this.logReferralActivity(expertId, newUserId, 'expert');
+
             console.log(`✅ Expert referral processed: ${expertId} -> ${newUserId}`);
             return true;
         } catch (err) {
             console.error(`❌ Error processing expert referral: ${err.message}`);
             return false;
+        }
+    }
+
+    // Логирование активности для антиабуз анализа
+    async logReferralActivity(referrerId, newUserId, type = 'user') {
+        try {
+            const activityId = `REF_ACTIVITY-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+            const activity = {
+                activityId,
+                referrerId,
+                newUserId,
+                type,
+                timestamp: new Date().toISOString(),
+                date: new Date().toISOString().split('T')[0]
+            };
+            
+            // Сохраняем активность
+            await redis.set(`ref_activity:${activityId}`, JSON.stringify(activity));
+            await redis.lpush(`ref_activities:${referrerId}`, activityId);
+            
+            // Проверяем подозрительную активность (больше 10 рефералов за день)
+            const todayActivities = await redis.lrange(`ref_activities:${referrerId}`, 0, -1);
+            let todayCount = 0;
+            
+            for (const id of todayActivities) {
+                const act = await redis.get(`ref_activity:${id}`);
+                if (act) {
+                    const parsed = JSON.parse(act);
+                    if (parsed.date === activity.date) {
+                        todayCount++;
+                    }
+                }
+            }
+            
+            if (todayCount > 10) {
+                console.log(`⚠️ SUSPICIOUS ACTIVITY: User ${referrerId} has ${todayCount} referrals today`);
+                // Можно добавить флаг для модерации
+                await redis.set(`suspicious_referrer:${referrerId}`, Date.now());
+            }
+        } catch (err) {
+            console.error(`❌ Error logging referral activity: ${err.message}`);
         }
     }
 
