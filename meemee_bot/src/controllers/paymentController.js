@@ -57,7 +57,7 @@ export async function handlePayCard(ctx) {
 export async function handlePayCrypto(ctx) {
     try {
         const keyboard = createCryptoKeyboard();
-        await ctx.editMessageText('💎 Выберите криптовалюту:', keyboard);
+        await ctx.editMessageText('💎 Выберите криптовалюту:', { reply_markup: keyboard });
     } catch (err) {
         console.error('❌ Error in handlePayCrypto:', err);
         await ctx.answerCbQuery('Произошла ошибка');
