@@ -616,13 +616,13 @@ bot.action('broadcast_confirm', async (ctx) => {
 
         const allUsers = await userService.getAllUsers();
         const text = ctx.session.broadcastText;
-        const photoId = ctx.session.broadcastPhotoId;
+        const photoUrl = ctx.session.broadcastPhotoUrl;
         const buttonText = ctx.session.broadcastButtonText;
         const buttonUrl = ctx.session.broadcastButtonUrl;
         
         console.log(`📤 Starting broadcast to ${allUsers.length} users`);
         console.log(`Text: "${text}"`);
-        console.log(`Photo: ${photoId ? 'YES' : 'NO'}, Button: ${buttonText ? 'YES' : 'NO'}`);
+        console.log(`Photo: ${photoUrl ? 'YES' : 'NO'}, Button: ${buttonText ? 'YES' : 'NO'}`);
         
         if (!text) {
             await ctx.editMessageText('❌ Ошибка: текст рассылки пуст!', ADMIN_MENU);
