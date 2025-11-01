@@ -638,11 +638,18 @@ bot.action('broadcast_confirm', async (ctx) => {
         
         console.log(`\n${'='.repeat(60)}`);
         console.log(`📤 Starting broadcast to ${allUsers.length} users`);
+        console.log(`Session data check:`);
+        console.log(`  - broadcastText: ${ctx.session.broadcastText ? 'EXISTS' : 'MISSING'}`);
+        console.log(`  - broadcastPhotoBuffer: ${ctx.session.broadcastPhotoBuffer ? 'EXISTS' : 'MISSING'}`);
+        console.log(`  - broadcastButtonText: ${ctx.session.broadcastButtonText || 'N/A'}`);
+        console.log(`  - broadcastButtonUrl: ${ctx.session.broadcastButtonUrl || 'N/A'}`);
         console.log(`Text: "${text}"`);
         console.log(`Photo: ${photoBuffer ? 'YES' : 'NO'}, Button: ${buttonText ? 'YES' : 'NO'}`);
         if (photoBuffer) {
             console.log(`Photo buffer base64 length: ${photoBuffer.length}`);
             console.log(`Photo buffer sample (first 50 chars): ${photoBuffer.substring(0, 50)}...`);
+        } else {
+            console.log(`⚠️ WARNING: photoBuffer is ${photoBuffer} - это может быть проблема!`);
         }
         if (buttonText && buttonUrl) {
             console.log(`Button text: "${buttonText}"`);
