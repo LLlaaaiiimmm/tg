@@ -235,10 +235,10 @@ bot.action('broadcast', async (ctx) => {
         if (!ctx.session) {
             ctx.session = {};
         }
-        ctx.session.broadcastStep = 'text';
+        ctx.session.broadcastStep = 'content';
         
         await ctx.editMessageText(
-            '📢 Рассылка сообщений\n\n🔹 Шаг 1/3: Текст\n\nОтправьте текст сообщения для рассылки всем пользователям.\n\n💡 Используйте HTML разметку:\n<b>жирный</b>, <i>курсив</i>, <code>код</code>',
+            '📢 Рассылка сообщений\n\n🔹 Шаг 1/2: Содержание\n\nОтправьте сообщение для рассылки:\n\n1️⃣ Только текст - просто напишите сообщение\n2️⃣ Фото с текстом - отправьте фото с подписью (caption)\n3️⃣ Только фото - отправьте фото без подписи\n\n💡 Используйте HTML разметку:\n<b>жирный</b>, <i>курсив</i>, <code>код</code>',
             {
                 reply_markup: {
                     inline_keyboard: [
