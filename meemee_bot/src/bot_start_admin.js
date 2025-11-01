@@ -634,9 +634,19 @@ bot.action('broadcast_confirm', async (ctx) => {
         const buttonText = ctx.session.broadcastButtonText;
         const buttonUrl = ctx.session.broadcastButtonUrl;
         
+        console.log(`\n${'='.repeat(60)}`);
         console.log(`📤 Starting broadcast to ${allUsers.length} users`);
         console.log(`Text: "${text}"`);
         console.log(`Photo: ${photoBuffer ? 'YES' : 'NO'}, Button: ${buttonText ? 'YES' : 'NO'}`);
+        if (photoBuffer) {
+            console.log(`Photo buffer base64 length: ${photoBuffer.length}`);
+            console.log(`Photo buffer sample (first 50 chars): ${photoBuffer.substring(0, 50)}...`);
+        }
+        if (buttonText && buttonUrl) {
+            console.log(`Button text: "${buttonText}"`);
+            console.log(`Button URL: ${buttonUrl}`);
+        }
+        console.log(`${'='.repeat(60)}\n`);
         
         if (!text) {
             await ctx.editMessageText('❌ Ошибка: текст рассылки пуст!', ADMIN_MENU);
