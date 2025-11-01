@@ -597,6 +597,12 @@ async function showBroadcastPreview(ctx) {
 // Подтверждение и отправка рассылки
 bot.action('broadcast_confirm', async (ctx) => {
     try {
+        // Проверяем сессию
+        if (!ctx.session || !ctx.session.broadcastText) {
+            await ctx.answerCbQuery('❌ Ошибка: текст рассылки не найден', { show_alert: true });
+            return;
+        }
+
         const allUsers = await userService.getAllUsers();
         const text = ctx.session.broadcastText;
         const photoId = ctx.session.broadcastPhotoId;
@@ -604,7 +610,13 @@ bot.action('broadcast_confirm', async (ctx) => {
         const buttonUrl = ctx.session.broadcastButtonUrl;
         
         console.log(`📤 Starting broadcast to ${allUsers.length} users`);
-        console.log(`Text: ${text ? 'YES' : 'NO'}, Photo: ${photoId ? 'YES' : 'NO'}, Button: ${buttonText ? 'YES' : 'NO'}`);
+        console.log(`Text: "${text}"`);
+        console.log(`Photo: ${photoId ? 'YES' : 'NO'}, Button: ${buttonText ? 'YES' : 'NO'}`);
+        
+        if (!text) {
+            await ctx.editMessageText('❌ Ошибка: текст рассылки пуст!', ADMIN_MENU);
+            return;
+        }
         
         if (allUsers.length === 0) {
             await ctx.editMessageText('❌ Не найдено ни одного пользователя для рассылки!', ADMIN_MENU);
@@ -618,6 +630,13 @@ bot.action('broadcast_confirm', async (ctx) => {
         
         for (const user of allUsers) {
             try {
+                // Проверяем что userId существует
+                if (!user.userId) {
+                    console.log(`⚠️ Skipping user without userId:`, user);
+                    failed++;
+                    continue;
+                }
+
                 const options = { parse_mode: 'HTML' };
                 
                 // Добавляем кнопку если есть
@@ -647,6 +666,9 @@ bot.action('broadcast_confirm', async (ctx) => {
             } catch (err) {
                 failed++;
                 console.error(`❌ Failed to send to ${user.userId}:`, err.message);
+                if (err.response) {
+                    console.error(`Error details:`, err.response.description);
+                }
             }
         }
         
@@ -665,7 +687,8 @@ bot.action('broadcast_confirm', async (ctx) => {
         delete ctx.session.broadcastButtonUrl;
     } catch (err) {
         console.error('❌ Error in broadcast confirm:', err);
-        await ctx.reply('Произошла ошибка при рассылке');
+        console.error('Error stack:', err.stack);
+        await ctx.reply('❌ Произошла ошибка при рассылке: ' + err.message);
     }
 });
 
