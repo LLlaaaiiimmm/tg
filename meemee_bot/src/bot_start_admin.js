@@ -484,8 +484,19 @@ bot.on('photo', async (ctx) => {
         }
         
         if (ctx.session.broadcastStep === 'photo') {
-            // Сохраняем ID фото
-            ctx.session.broadcastPhotoId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+            // Сохраняем ID фото (самое большое качество)
+            const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+            
+            try {
+                // Получаем ссылку на файл
+                const fileLink = await ctx.telegram.getFileLink(photoFileId);
+                ctx.session.broadcastPhotoUrl = fileLink.href;
+                console.log(`✅ Photo URL saved: ${fileLink.href}`);
+            } catch (err) {
+                console.error('❌ Error getting file link:', err);
+                return await ctx.reply('❌ Ошибка при обработке фото. Попробуйте ещё раз.');
+            }
+            
             ctx.session.broadcastStep = 'button';
             
             await ctx.reply(
