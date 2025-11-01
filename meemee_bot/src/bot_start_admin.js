@@ -18,8 +18,11 @@ if (!process.env.BOT_TOKEN) {
 }
 
 const bot = new Telegraf(process.env.BOT_TOKEN_ADMIN);
+console.log(`✅ Admin bot initialized with token: ${process.env.BOT_TOKEN_ADMIN?.substring(0, 10)}...`);
+
 // Создаём отдельный экземпляр для рассылки через основной бот
 const mainBot = new Telegraf(process.env.BOT_TOKEN);
+console.log(`✅ Main bot initialized with token: ${process.env.BOT_TOKEN?.substring(0, 10)}...`);
 
 const userService = new UserService();
 const orderService = new OrderService();
