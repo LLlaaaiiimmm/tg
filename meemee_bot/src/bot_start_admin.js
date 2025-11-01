@@ -735,10 +735,15 @@ bot.action('broadcast_confirm', async (ctx) => {
                 await new Promise(resolve => setTimeout(resolve, 50));
             } catch (err) {
                 failed++;
-                console.error(`❌ Failed to send to ${user.userId}:`, err.message);
+                console.error(`\n❌ Failed to send to ${user.userId}`);
+                console.error(`  Error message: ${err.message}`);
+                console.error(`  Error code: ${err.code}`);
                 if (err.response) {
-                    console.error(`Error details:`, err.response.description);
+                    console.error(`  Response description:`, err.response.description);
+                    console.error(`  Response error_code:`, err.response.error_code);
+                    console.error(`  Full response:`, JSON.stringify(err.response, null, 2));
                 }
+                console.error(`  Error stack:`, err.stack);
             }
         }
         
