@@ -426,17 +426,18 @@ bot.on('text', async (ctx) => {
             await ctx.reply(message, ADMIN_MENU);
             delete ctx.session.waitingForUserId;
             
-        } else if (ctx.session.broadcastStep === 'text') {
+        } else if (ctx.session.broadcastStep === 'content') {
             // Сохраняем текст рассылки
             ctx.session.broadcastText = ctx.message.text;
-            ctx.session.broadcastStep = 'photo';
+            ctx.session.broadcastStep = 'button';
             
             await ctx.reply(
-                '📢 Рассылка сообщений\n\n🔹 Шаг 2/3: Фото (опционально)\n\nОтправьте фото для рассылки или нажмите "Пропустить"',
+                '📢 Рассылка сообщений\n\n🔹 Шаг 2/2: Кнопка (опционально)\n\nХотите добавить кнопку со ссылкой?',
                 {
                     reply_markup: {
                         inline_keyboard: [
-                            [{ text: '⏭️ Пропустить фото', callback_data: 'broadcast_skip_photo' }],
+                            [{ text: '✅ Да, добавить кнопку', callback_data: 'broadcast_add_button' }],
+                            [{ text: '⏭️ Нет, продолжить без кнопки', callback_data: 'broadcast_skip_button' }],
                             [{ text: '🔙 Отмена', callback_data: 'main_menu' }]
                         ]
                     }
