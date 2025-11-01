@@ -649,7 +649,7 @@ bot.action('broadcast_confirm', async (ctx) => {
                 }
 
                 // Отправляем с фото или без
-                if (photoId) {
+                if (photoUrl) {
                     // Формируем опции для sendPhoto явно
                     const photoOptions = {
                         caption: text,
@@ -665,7 +665,8 @@ bot.action('broadcast_confirm', async (ctx) => {
                         };
                     }
                     
-                    await mainBot.telegram.sendPhoto(user.userId, photoId, photoOptions);
+                    // Отправляем фото по URL
+                    await mainBot.telegram.sendPhoto(user.userId, photoUrl, photoOptions);
                 } else {
                     // Для текстового сообщения
                     const textOptions = { parse_mode: 'HTML' };
