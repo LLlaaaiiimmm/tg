@@ -488,10 +488,16 @@ bot.on('photo', async (ctx) => {
             ctx.session = {};
         }
         
-        if (ctx.session.broadcastStep === 'photo') {
+        if (ctx.session.broadcastStep === 'content') {
+            // Сохраняем текст из caption (если есть)
+            const caption = ctx.message.caption || '';
+            ctx.session.broadcastText = caption;
+            console.log(`📸 Photo with caption received`);
+            console.log(`  Caption: "${caption}"`);
+            
             // Сохраняем ID фото (самое большое качество)
             const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
-            console.log(`📸 Photo received, file_id: ${photoFileId}`);
+            console.log(`  Photo file_id: ${photoFileId}`);
             
             try {
                 // Получаем ссылку на файл через админ-бота
@@ -517,7 +523,7 @@ bot.on('photo', async (ctx) => {
             ctx.session.broadcastStep = 'button';
             
             await ctx.reply(
-                '📢 Рассылка сообщений\n\n🔹 Шаг 3/3: Кнопка (опционально)\n\nХотите добавить кнопку со ссылкой?',
+                '📢 Рассылка сообщений\n\n🔹 Шаг 2/2: Кнопка (опционально)\n\nХотите добавить кнопку со ссылкой?',
                 {
                     reply_markup: {
                         inline_keyboard: [
