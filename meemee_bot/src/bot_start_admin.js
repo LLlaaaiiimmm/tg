@@ -637,25 +637,38 @@ bot.action('broadcast_confirm', async (ctx) => {
                     continue;
                 }
 
-                const options = { parse_mode: 'HTML' };
-                
-                // Добавляем кнопку если есть
-                if (buttonText && buttonUrl) {
-                    options.reply_markup = {
-                        inline_keyboard: [
-                            [{ text: buttonText, url: buttonUrl }]
-                        ]
-                    };
-                }
-                
                 // Отправляем с фото или без
                 if (photoId) {
-                    await mainBot.telegram.sendPhoto(user.userId, photoId, {
+                    // Формируем опции для sendPhoto явно
+                    const photoOptions = {
                         caption: text,
-                        ...options
-                    });
+                        parse_mode: 'HTML'
+                    };
+                    
+                    // Добавляем кнопку если есть
+                    if (buttonText && buttonUrl) {
+                        photoOptions.reply_markup = {
+                            inline_keyboard: [
+                                [{ text: buttonText, url: buttonUrl }]
+                            ]
+                        };
+                    }
+                    
+                    await mainBot.telegram.sendPhoto(user.userId, photoId, photoOptions);
                 } else {
-                    await mainBot.telegram.sendMessage(user.userId, text, options);
+                    // Для текстового сообщения
+                    const textOptions = { parse_mode: 'HTML' };
+                    
+                    // Добавляем кнопку если есть
+                    if (buttonText && buttonUrl) {
+                        textOptions.reply_markup = {
+                            inline_keyboard: [
+                                [{ text: buttonText, url: buttonUrl }]
+                            ]
+                        };
+                    }
+                    
+                    await mainBot.telegram.sendMessage(user.userId, text, textOptions);
                 }
                 
                 success++;
