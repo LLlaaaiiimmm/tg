@@ -490,12 +490,18 @@ bot.on('photo', async (ctx) => {
             const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
             
             try {
-                // Получаем ссылку на файл
+                // Получаем ссылку на файл через админ-бота
                 const fileLink = await ctx.telegram.getFileLink(photoFileId);
-                ctx.session.broadcastPhotoUrl = fileLink.href;
-                console.log(`✅ Photo URL saved: ${fileLink.href}`);
+                
+                // Скачиваем фото
+                const response = await axios.get(fileLink.href, { responseType: 'arraybuffer' });
+                const photoBuffer = Buffer.from(response.data);
+                
+                // Сохраняем буфер в сессию
+                ctx.session.broadcastPhotoBuffer = photoBuffer.toString('base64');
+                console.log(`✅ Photo downloaded and saved (${photoBuffer.length} bytes)`);
             } catch (err) {
-                console.error('❌ Error getting file link:', err);
+                console.error('❌ Error downloading photo:', err);
                 return await ctx.reply('❌ Ошибка при обработке фото. Попробуйте ещё раз.');
             }
             
