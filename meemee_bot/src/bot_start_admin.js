@@ -702,12 +702,20 @@ bot.action('broadcast_confirm', async (ctx) => {
                     
                     console.log(`  Caption length: ${text.length} chars`);
                     console.log(`  Calling mainBot.telegram.sendPhoto...`);
-                    console.log(`  Photo object type: ${typeof { source: photo }}`);
                     console.log(`  Photo source type: ${typeof photo}, isBuffer: ${Buffer.isBuffer(photo)}`);
                     
-                    // Отправляем фото как Buffer (source)
-                    const photoInput = { source: photo };
-                    console.log(`  Photo input:`, JSON.stringify({ source: `<Buffer ${photo.length} bytes>` }));
+                    // Пробуем использовать Input.fromBuffer
+                    let photoInput;
+                    try {
+                        console.log(`  Trying Input.fromBuffer...`);
+                        photoInput = Input.fromBuffer(photo);
+                        console.log(`  ✅ Input.fromBuffer created successfully`);
+                    } catch (e) {
+                        console.log(`  ⚠️ Input.fromBuffer failed, using { source: photo }`);
+                        photoInput = { source: photo };
+                    }
+                    
+                    console.log(`  Photo input type:`, typeof photoInput);
                     
                     await mainBot.telegram.sendPhoto(user.userId, photoInput, photoOptions);
                     console.log(`  ✅ Successfully sent to ${user.userId}`);
