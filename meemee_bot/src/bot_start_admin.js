@@ -347,12 +347,13 @@ bot.action('export_generations', async (ctx) => {
         await ctx.answerCbQuery('Подготовка отчёта...');
         
         // Получаем все генерации из Redis
-        const redis = (await import('../redis.js')).default;
-        const allKeys = await redis.keys('generation:*');
+        const redisModule = await import('./redis.js');
+        const redisClient = redisModule.default;
+        const allKeys = await redisClient.keys('generation:*');
         const generations = [];
         
         for (const key of allKeys) {
-            const gen = await redis.get(key);
+            const gen = await redisClient.get(key);
             if (gen) {
                 generations.push(JSON.parse(gen));
             }
@@ -383,7 +384,8 @@ bot.action('export_generations', async (ctx) => {
         await ctx.reply('✅ Отчёт готов!', ADMIN_MENU);
     } catch (err) {
         console.error('❌ Error exporting generations:', err);
-        await ctx.reply('❌ Ошибка при экспорте');
+        console.error('Error details:', err.stack);
+        await ctx.reply('❌ Ошибка при экспорте: ' + err.message);
     }
 });
 
