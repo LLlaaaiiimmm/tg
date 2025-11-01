@@ -541,28 +541,6 @@ bot.on('photo', async (ctx) => {
     }
 });
 
-// Callback для пропуска фото
-bot.action('broadcast_skip_photo', async (ctx) => {
-    try {
-        ctx.session.broadcastStep = 'button';
-        
-        await ctx.editMessageText(
-            '📢 Рассылка сообщений\n\n🔹 Шаг 3/3: Кнопка (опционально)\n\nХотите добавить кнопку со ссылкой?',
-            {
-                reply_markup: {
-                    inline_keyboard: [
-                        [{ text: '✅ Да, добавить кнопку', callback_data: 'broadcast_add_button' }],
-                        [{ text: '⏭️ Нет, продолжить без кнопки', callback_data: 'broadcast_skip_button' }],
-                        [{ text: '🔙 Отмена', callback_data: 'main_menu' }]
-                    ]
-                }
-            }
-        );
-    } catch (err) {
-        console.error('❌ Error:', err);
-    }
-});
-
 // Callback для добавления кнопки
 bot.action('broadcast_add_button', async (ctx) => {
     try {
