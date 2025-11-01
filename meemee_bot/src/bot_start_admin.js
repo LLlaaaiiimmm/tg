@@ -674,8 +674,13 @@ bot.action('broadcast_confirm', async (ctx) => {
 
                 // Отправляем с фото или без
                 if (photoBuffer) {
+                    console.log(`\n📤 Sending to user ${user.userId}...`);
+                    console.log(`  Converting base64 to Buffer...`);
+                    
                     // Преобразуем base64 обратно в Buffer
                     const photo = Buffer.from(photoBuffer, 'base64');
+                    console.log(`  ✅ Buffer created: ${photo.length} bytes`);
+                    console.log(`  Buffer sample (first 20 bytes): ${photo.slice(0, 20).toString('hex')}`);
                     
                     // Формируем опции для sendPhoto явно
                     const photoOptions = {
@@ -685,6 +690,7 @@ bot.action('broadcast_confirm', async (ctx) => {
                     
                     // Добавляем кнопку если есть
                     if (buttonText && buttonUrl) {
+                        console.log(`  Adding button: "${buttonText}" -> ${buttonUrl}`);
                         photoOptions.reply_markup = {
                             inline_keyboard: [
                                 [{ text: buttonText, url: buttonUrl }]
@@ -692,9 +698,20 @@ bot.action('broadcast_confirm', async (ctx) => {
                         };
                     }
                     
+                    console.log(`  Caption length: ${text.length} chars`);
+                    console.log(`  Calling mainBot.telegram.sendPhoto...`);
+                    console.log(`  Photo object type: ${typeof { source: photo }}`);
+                    console.log(`  Photo source type: ${typeof photo}, isBuffer: ${Buffer.isBuffer(photo)}`);
+                    
                     // Отправляем фото как Buffer (source)
-                    await mainBot.telegram.sendPhoto(user.userId, { source: photo }, photoOptions);
+                    const photoInput = { source: photo };
+                    console.log(`  Photo input:`, JSON.stringify({ source: `<Buffer ${photo.length} bytes>` }));
+                    
+                    await mainBot.telegram.sendPhoto(user.userId, photoInput, photoOptions);
+                    console.log(`  ✅ Successfully sent to ${user.userId}`);
                 } else {
+                    console.log(`\n📤 Sending text message to user ${user.userId}...`);
+                    
                     // Для текстового сообщения
                     const textOptions = { parse_mode: 'HTML' };
                     
@@ -708,6 +725,7 @@ bot.action('broadcast_confirm', async (ctx) => {
                     }
                     
                     await mainBot.telegram.sendMessage(user.userId, text, textOptions);
+                    console.log(`  ✅ Successfully sent to ${user.userId}`);
                 }
                 
                 success++;
