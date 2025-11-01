@@ -718,7 +718,7 @@ bot.action('broadcast_confirm', async (ctx) => {
         // Очищаем сессию
         delete ctx.session.broadcastStep;
         delete ctx.session.broadcastText;
-        delete ctx.session.broadcastPhotoUrl;
+        delete ctx.session.broadcastPhotoBuffer;
         delete ctx.session.broadcastButtonText;
         delete ctx.session.broadcastButtonUrl;
     } catch (err) {
