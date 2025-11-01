@@ -580,7 +580,7 @@ async function showBroadcastPreview(ctx) {
         message += ctx.session.broadcastText;
         message += '\n───────────────\n\n';
         
-        if (ctx.session.broadcastPhotoId) {
+        if (ctx.session.broadcastPhotoUrl) {
             message += '📷 С фото: ДА\n';
         }
         
