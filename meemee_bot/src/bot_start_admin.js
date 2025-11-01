@@ -677,10 +677,13 @@ bot.action('broadcast_confirm', async (ctx) => {
                     console.log(`  Buffer sample (first 20 bytes): ${photo.slice(0, 20).toString('hex')}`);
                     
                     // Формируем опции для sendPhoto явно
-                    const photoOptions = {
-                        caption: text,
-                        parse_mode: 'HTML'
-                    };
+                    const photoOptions = {};
+                    
+                    // Добавляем caption только если есть текст
+                    if (text && text.trim()) {
+                        photoOptions.caption = text;
+                        photoOptions.parse_mode = 'HTML';
+                    }
                     
                     // Добавляем кнопку если есть
                     if (buttonText && buttonUrl) {
