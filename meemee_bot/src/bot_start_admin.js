@@ -4,6 +4,8 @@ import { UserService } from './services/User.service.js';
 import { OrderService } from './services/Order.service.js';
 import { GenerationService } from './services/Generation.service.js';
 import { ADMINS } from './config.js';
+import axios from 'axios';
+import { Input } from 'telegraf';
 
 if (!process.env.BOT_TOKEN_ADMIN) {
     console.error('❌ BOT_TOKEN_ADMIN not found in .env file');
