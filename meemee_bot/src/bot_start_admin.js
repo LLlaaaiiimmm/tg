@@ -657,7 +657,10 @@ bot.action('broadcast_confirm', async (ctx) => {
                 }
 
                 // Отправляем с фото или без
-                if (photoUrl) {
+                if (photoBuffer) {
+                    // Преобразуем base64 обратно в Buffer
+                    const photo = Buffer.from(photoBuffer, 'base64');
+                    
                     // Формируем опции для sendPhoto явно
                     const photoOptions = {
                         caption: text,
@@ -673,8 +676,8 @@ bot.action('broadcast_confirm', async (ctx) => {
                         };
                     }
                     
-                    // Отправляем фото по URL
-                    await mainBot.telegram.sendPhoto(user.userId, photoUrl, photoOptions);
+                    // Отправляем фото как Buffer (source)
+                    await mainBot.telegram.sendPhoto(user.userId, { source: photo }, photoOptions);
                 } else {
                     // Для текстового сообщения
                     const textOptions = { parse_mode: 'HTML' };
