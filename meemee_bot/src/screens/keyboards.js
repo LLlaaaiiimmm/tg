@@ -1,5 +1,8 @@
 import { KEYBOARDS } from '../config.js';
 import { loadActiveMemes } from '../utils/memeLoader.js';
+import { UserService } from '../services/User.service.js';
+
+const userService = new UserService();
 
 // Генерация клавиатуры каталога с пагинацией
 export function createCatalogKeyboard(page = 0, itemsPerPage = 5) {
