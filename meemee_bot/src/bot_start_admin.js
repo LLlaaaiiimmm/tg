@@ -502,24 +502,40 @@ bot.on('photo', async (ctx) => {
         if (ctx.session.broadcast && ctx.session.broadcast.step === 'content') {
             // Берём лучшее качество фото
             const photo = ctx.message.photo[ctx.message.photo.length - 1];
-            ctx.session.broadcast.photoFileId = photo.file_id;
-            ctx.session.broadcast.text = ctx.message.caption || '';
-            ctx.session.broadcast.step = 'button_choice';
+            const caption = ctx.message.caption || '';
             
-            console.log(`📸 Photo received: file_id=${photo.file_id}, caption="${ctx.message.caption || ''}"`);
+            console.log(`📸 Photo received: file_id=${photo.file_id}, caption="${caption}"`);
             
-            await ctx.reply(
-                '📢 Шаг 2: Добавить кнопку?',
-                {
-                    reply_markup: {
-                        inline_keyboard: [
-                            [{ text: '✅ Да', callback_data: 'broadcast_add_button' }],
-                            [{ text: '⏭️ Нет', callback_data: 'broadcast_skip_button' }],
-                            [{ text: '🔙 Отмена', callback_data: 'main_menu' }]
-                        ]
+            try {
+                // Скачиваем фото через админ-бота
+                console.log('⬇️ Downloading photo...');
+                const fileLink = await ctx.telegram.getFileLink(photo.file_id);
+                const response = await axios.get(fileLink.href, { responseType: 'arraybuffer' });
+                const photoBuffer = Buffer.from(response.data);
+                
+                console.log(`✅ Photo downloaded: ${photoBuffer.length} bytes`);
+                
+                // Сохраняем Buffer напрямую (не base64!)
+                ctx.session.broadcast.photoBuffer = photoBuffer;
+                ctx.session.broadcast.text = caption;
+                ctx.session.broadcast.step = 'button_choice';
+                
+                await ctx.reply(
+                    '📢 Шаг 2: Добавить кнопку?',
+                    {
+                        reply_markup: {
+                            inline_keyboard: [
+                                [{ text: '✅ Да', callback_data: 'broadcast_add_button' }],
+                                [{ text: '⏭️ Нет', callback_data: 'broadcast_skip_button' }],
+                                [{ text: '🔙 Отмена', callback_data: 'main_menu' }]
+                            ]
+                        }
                     }
-                }
-            );
+                );
+            } catch (err) {
+                console.error('❌ Error downloading photo:', err);
+                await ctx.reply('❌ Ошибка при обработке фото. Попробуйте ещё раз.');
+            }
         }
     } catch (err) {
         console.error('❌ Error in photo handler:', err);
