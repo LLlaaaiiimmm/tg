@@ -98,10 +98,12 @@ bot.start(async (ctx) => {
 
         // Отправка приветственного сообщения
         if (showWelcome) {
-            await ctx.reply(MESSAGES.WELCOME, { reply_markup: KEYBOARDS.MAIN_MENU });
+            const mainMenu = await createMainMenuKeyboard(userId);
+            await ctx.reply(MESSAGES.WELCOME, { reply_markup: mainMenu });
         } else {
             // Если уже отправили уведомление о реферале, просто отправляем меню
-            await ctx.reply('Выберите действие:', { reply_markup: KEYBOARDS.MAIN_MENU });
+            const mainMenu = await createMainMenuKeyboard(userId);
+            await ctx.reply('Выберите действие:', { reply_markup: mainMenu });
         }
     } catch (err) {
         console.error('❌ Error in /start:', err);
