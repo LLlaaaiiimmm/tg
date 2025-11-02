@@ -151,7 +151,20 @@ export class GenerationService {
 
             console.log('API Response:', JSON.stringify(response.data, null, 2));
 
-            // Проверка ответа
+            // Проверка на ошибки API
+            if (response.data && response.data.code !== 200) {
+                const errorCode = response.data.code;
+                const errorMsg = response.data.msg || 'Unknown error';
+                
+                // Специальная обработка для ошибки 402 (недостаточно кредитов)
+                if (errorCode === 402) {
+                    throw new Error(`❌ Недостаточно кредитов на Kie.ai API: ${errorMsg}`);
+                }
+                
+                throw new Error(`API Error (${errorCode}): ${errorMsg}`);
+            }
+
+            // Проверка успешного ответа
             if (response.data && response.data.code === 200 && response.data.data && response.data.data.taskId) {
                 const taskId = response.data.data.taskId;
                 console.log('✅ Task created successfully. Task ID:', taskId);
