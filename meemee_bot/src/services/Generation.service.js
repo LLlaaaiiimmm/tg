@@ -29,26 +29,37 @@ export class GenerationService {
     }
 
     // Создание генерации
-    async createGeneration({ userId, memeId, name, gender }) {
+    async createGeneration({ userId, memeId, name, gender, customPrompt = null }) {
         try {
             const generationId = this.generateId();
-            const memeData = this.loadMemePrompt(memeId);
+            let prompt;
+            let memeName = 'Custom';
 
-            if (!memeData) {
-                return { error: 'Мем не найден' };
+            if (customPrompt) {
+                // Используем кастомный промпт
+                prompt = customPrompt;
+                memeName = 'Пользовательский промпт';
+            } else {
+                // Используем мем из каталога
+                const memeData = this.loadMemePrompt(memeId);
+
+                if (!memeData) {
+                    return { error: 'Мем не найден' };
+                }
+
+                const genderText = gender === 'male' ? 'мальчик' : 'девочка';
+                prompt = memeData.prompt
+                    .replace('{name}', name)
+                    .replace('{gender}', gender)
+                    .replace('{gender_text}', genderText);
+                memeName = memeData.name;
             }
-
-            const genderText = gender === 'male' ? 'мальчик' : 'девочка';
-            const prompt = memeData.prompt
-                .replace('{name}', name)
-                .replace('{gender}', gender)
-                .replace('{gender_text}', genderText);
 
             const generation = {
                 generationId,
                 userId,
                 memeId,
-                memeName: memeData.name,
+                memeName,
                 name,
                 gender,
                 prompt,
