@@ -9,10 +9,16 @@ const userService = new UserService();
 async function testUserService() {
     try {
         const testUserId = 999888777;
+        const testTelegramUser = {
+            id: testUserId,
+            username: 'test_user',
+            first_name: 'Test',
+            last_name: 'User'
+        };
         
         console.log('1️⃣ Тест создания пользователя\n');
         
-        const user = await userService.createUser(testUserId, 'test_user');
+        const user = await userService.createUser(testTelegramUser);
         
         console.log('   ✅ Пользователь создан');
         console.log(`   👤 User ID: ${user.userId}`);
