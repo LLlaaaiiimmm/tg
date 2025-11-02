@@ -161,45 +161,74 @@ export class GenerationService {
     }
 
     // Polling для проверки статуса генерации
-    async pollVideoGeneration(operationName, maxAttempts = 60, interval = 5000) {
-        console.log('⏳ Starting polling for operation:', operationName);
+    async pollVideoGeneration(taskId, maxAttempts = 60, interval = 10000) {
+        console.log('⏳ Starting polling for task:', taskId);
         
         for (let i = 0; i < maxAttempts; i++) {
             try {
                 const response = await axios.get(
-                    `${this.apiUrl}/${operationName}?key=${this.apiKey}`,
+                    `${this.apiUrl}/queryTask`,
                     {
+                        params: {
+                            taskId: taskId
+                        },
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.apiKey}`
                         }
                     }
                 );
 
                 console.log(`Polling attempt ${i + 1}/${maxAttempts}...`);
+                console.log('Status response:', JSON.stringify(response.data, null, 2));
 
-                // Проверяем статус операции
-                if (response.data.done === true) {
-                    if (response.data.error) {
-                        throw new Error(response.data.error.message || 'Generation failed');
-                    }
+                // Проверяем успешный статус выполнения
+                if (response.data && response.data.code === 200 && response.data.data) {
+                    const taskData = response.data.data;
                     
-                    // Видео готово
-                    if (response.data.response && response.data.response.candidates) {
-                        const candidate = response.data.response.candidates[0];
-                        if (candidate.content && candidate.content.parts && candidate.content.parts[0].video) {
-                            const videoUri = candidate.content.parts[0].video.uri;
-                            console.log('✅ Video generation completed:', videoUri);
-                            return videoUri;
+                    // Задача успешно завершена
+                    if (taskData.state === 'success') {
+                        console.log('✅ Task completed successfully!');
+                        
+                        // Парсим результат
+                        if (taskData.resultJson) {
+                            const result = typeof taskData.resultJson === 'string' 
+                                ? JSON.parse(taskData.resultJson) 
+                                : taskData.resultJson;
+                            
+                            // Используем URL без водяного знака, если доступен
+                            const videoUrl = result.resultUrls && result.resultUrls.length > 0 
+                                ? result.resultUrls[0] 
+                                : null;
+                            
+                            if (videoUrl) {
+                                console.log('✅ Video URL received:', videoUrl);
+                                return videoUrl;
+                            }
                         }
+                        
+                        throw new Error('Task completed but no video URL found');
                     }
                     
-                    throw new Error('Operation completed but no video found');
+                    // Задача завершилась с ошибкой
+                    if (taskData.state === 'fail') {
+                        const errorMsg = taskData.failMsg || 'Unknown error';
+                        throw new Error(`Video generation failed: ${errorMsg}`);
+                    }
+                    
+                    // Задача еще в процессе (processing, queued)
+                    console.log(`Task status: ${taskData.state}. Waiting...`);
                 }
 
                 // Ждём перед следующей попыткой
                 await new Promise(resolve => setTimeout(resolve, interval));
             } catch (err) {
                 console.error(`❌ Polling error: ${err.message}`);
+                
+                // Если это ошибка завершения задачи, пробрасываем сразу
+                if (err.message.includes('generation failed')) {
+                    throw err;
+                }
                 
                 // Если это последняя попытка, пробрасываем ошибку
                 if (i === maxAttempts - 1) {
