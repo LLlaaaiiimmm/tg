@@ -237,7 +237,7 @@ bot.action('broadcast', async (ctx) => {
         ctx.session.broadcast = {
             step: 'content',
             text: null,
-            photoFileId: null,
+            photoBuffer: null,
             buttonText: null,
             buttonUrl: null
         };
