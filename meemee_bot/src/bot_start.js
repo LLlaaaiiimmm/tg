@@ -114,9 +114,13 @@ bot.start(async (ctx) => {
 // Обработка главного меню
 bot.action('main_menu', async (ctx) => {
     try {
-        await ctx.editMessageText(MESSAGES.WELCOME, { reply_markup: KEYBOARDS.MAIN_MENU });
+        const userId = ctx.from.id;
+        const mainMenu = await createMainMenuKeyboard(userId);
+        await ctx.editMessageText(MESSAGES.WELCOME, { reply_markup: mainMenu });
     } catch (err) {
-        await ctx.reply(MESSAGES.WELCOME, { reply_markup: KEYBOARDS.MAIN_MENU });
+        const userId = ctx.from.id;
+        const mainMenu = await createMainMenuKeyboard(userId);
+        await ctx.reply(MESSAGES.WELCOME, { reply_markup: mainMenu });
     }
 });
 
