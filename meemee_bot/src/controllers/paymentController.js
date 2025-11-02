@@ -1,5 +1,5 @@
 import { MESSAGES, PACKAGES, SUPPORTED_CRYPTO, REFERRAL_ENABLED, REFERRAL_TYPE_KEYBOARD, ABOUT_KEYBOARD } from '../config.js';
-import { createCryptoKeyboard, createChainKeyboard, createPaymentCryptoKeyboard, createAfterPaymentKeyboard } from '../screens/keyboards.js';
+import { createCryptoKeyboard, createChainKeyboard, createPaymentCryptoKeyboard, createAfterPaymentKeyboard, createMainMenuKeyboard } from '../screens/keyboards.js';
 import { PaymentCryptoService } from '../services/PaymentCrypto.service.js';
 import { PaymentFiatService } from '../services/PaymentFiat.service.js';
 import { UserService } from '../services/User.service.js';
