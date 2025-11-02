@@ -167,7 +167,7 @@ export class GenerationService {
         for (let i = 0; i < maxAttempts; i++) {
             try {
                 const response = await axios.get(
-                    `${this.apiUrl}/queryTask`,
+                    `${this.apiUrl}/recordInfo`,
                     {
                         params: {
                             taskId: taskId
@@ -216,7 +216,7 @@ export class GenerationService {
                         throw new Error(`Video generation failed: ${errorMsg}`);
                     }
                     
-                    // Задача еще в процессе (processing, queued)
+                    // Задача еще в процессе (generating, queuing, waiting)
                     console.log(`Task status: ${taskData.state}. Waiting...`);
                 }
 
