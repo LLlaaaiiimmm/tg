@@ -58,8 +58,8 @@ async function testReferralService() {
         
         console.log('\n4️⃣ Тест экспертной реферальной программы\n');
         
-        await userService.createUser(expertId, 'expert_user');
-        await userService.createUser(referralUserId, 'referral_user');
+        await userService.createUser({ id: expertId, username: 'expert_user' });
+        await userService.createUser({ id: referralUserId, username: 'referral_user' });
         
         console.log('   👥 Эксперт и реферал созданы');
         
