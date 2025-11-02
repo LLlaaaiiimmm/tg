@@ -231,14 +231,24 @@ bot.action('users', async (ctx) => {
 // Рассылка
 bot.action('broadcast', async (ctx) => {
     try {
-        // Инициализируем сессию если её нет
-        if (!ctx.session) {
-            ctx.session = {};
-        }
-        ctx.session.broadcastStep = 'content';
+        if (!ctx.session) ctx.session = {};
+        
+        // Очищаем предыдущие данные
+        ctx.session.broadcast = {
+            step: 'content',
+            text: null,
+            photoFileId: null,
+            buttonText: null,
+            buttonUrl: null
+        };
         
         await ctx.editMessageText(
-            '📢 Рассылка сообщений\n\n🔹 Шаг 1/2: Содержание\n\nОтправьте сообщение для рассылки:\n\n1️⃣ Только текст - просто напишите сообщение\n2️⃣ Фото с текстом - отправьте фото с подписью (caption)\n3️⃣ Только фото - отправьте фото без подписи\n\n💡 Используйте HTML разметку:\n<b>жирный</b>, <i>курсив</i>, <code>код</code>',
+            '📢 Рассылка сообщений\n\n' +
+            '📝 Шаг 1: Отправьте содержание\n\n' +
+            '▫️ Текст - просто напишите сообщение\n' +
+            '▫️ Фото с текстом - отправьте фото с подписью\n' +
+            '▫️ Только фото - отправьте фото\n\n' +
+            '💡 HTML разметка: <b>жирный</b>, <i>курсив</i>',
             {
                 reply_markup: {
                     inline_keyboard: [
