@@ -75,9 +75,9 @@ async function testUserService() {
         console.log(`   ✅ Списано ${deductCount} генераций`);
         
         const finalUser = await userService.getUser(testUserId);
-        console.log(`   Финальный баланс: Free=${finalUser.freeQuota}, Paid=${finalUser.paidQuota}`);
+        console.log(`   Финальный баланс: Free=${finalUser.free_quota}, Paid=${finalUser.paid_quota}`);
         
-        if (finalUser.freeQuota === 0 && finalUser.paidQuota === 0) {
+        if (finalUser.free_quota === 0 && finalUser.paid_quota === 0) {
             console.log(`   ✅ Все квоты корректно списаны`);
         }
         
