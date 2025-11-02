@@ -10,10 +10,10 @@ const __dirname = path.dirname(__filename);
 
 export class GenerationService {
     constructor() {
-        this.apiKey = process.env.GOOGLE_VEO3_API_KEY;
-        // Google Veo 3.1 API endpoint (через Gemini API)
-        this.apiUrl = `https://generativelanguage.googleapis.com/v1beta`;
-        this.modelName = 'veo-3.1-generate-preview';
+        this.apiKey = process.env.KIE_AI_API_KEY;
+        // Kie.ai Sora 2 API endpoint
+        this.apiUrl = `https://api.kie.ai/api/v1/jobs`;
+        this.modelName = 'sora-2-text-to-video';
     }
 
     // Загрузка промпта мема
