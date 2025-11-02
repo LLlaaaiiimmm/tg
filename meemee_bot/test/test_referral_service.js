@@ -34,8 +34,8 @@ async function testReferralService() {
             const referrerBalance = await userService.getUser(referrerId);
             const newUserBalance = await userService.getUser(newUserId);
             
-            console.log(`   💰 Баланс реферера: ${referrerBalance.freeQuota} free`);
-            console.log(`   💰 Баланс нового: ${newUserBalance.freeQuota} free`);
+            console.log(`   💰 Баланс реферера: ${referrerBalance.free_quota} free`);
+            console.log(`   💰 Баланс нового: ${newUserBalance.free_quota} free`);
         }
         
         console.log('\n2️⃣ Тест защиты от самореферала\n');
