@@ -497,51 +497,24 @@ bot.on('text', async (ctx) => {
 // Обработка фото
 bot.on('photo', async (ctx) => {
     try {
-        if (!ctx.session) {
-            ctx.session = {};
-        }
+        if (!ctx.session) ctx.session = {};
         
-        if (ctx.session.broadcastStep === 'content') {
-            // Сохраняем текст из caption (если есть)
-            const caption = ctx.message.caption || '';
-            ctx.session.broadcastText = caption;
-            console.log(`📸 Photo with caption received`);
-            console.log(`  Caption: "${caption}"`);
+        if (ctx.session.broadcast && ctx.session.broadcast.step === 'content') {
+            // Берём лучшее качество фото
+            const photo = ctx.message.photo[ctx.message.photo.length - 1];
+            ctx.session.broadcast.photoFileId = photo.file_id;
+            ctx.session.broadcast.text = ctx.message.caption || '';
+            ctx.session.broadcast.step = 'button_choice';
             
-            // Сохраняем ID фото (самое большое качество)
-            const photoFileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
-            console.log(`  Photo file_id: ${photoFileId}`);
-            
-            try {
-                // Получаем ссылку на файл через админ-бота
-                console.log(`🔗 Getting file link...`);
-                const fileLink = await ctx.telegram.getFileLink(photoFileId);
-                console.log(`✅ File link obtained: ${fileLink.href}`);
-                
-                // Скачиваем фото
-                console.log(`⬇️ Downloading photo...`);
-                const response = await axios.get(fileLink.href, { responseType: 'arraybuffer' });
-                const photoBuffer = Buffer.from(response.data);
-                console.log(`✅ Photo downloaded: ${photoBuffer.length} bytes`);
-                
-                // Сохраняем буфер в сессию
-                ctx.session.broadcastPhotoBuffer = photoBuffer.toString('base64');
-                console.log(`✅ Photo saved to session (base64 length: ${ctx.session.broadcastPhotoBuffer.length})`);
-            } catch (err) {
-                console.error('❌ Error downloading photo:', err);
-                console.error('Error stack:', err.stack);
-                return await ctx.reply('❌ Ошибка при обработке фото. Попробуйте ещё раз.');
-            }
-            
-            ctx.session.broadcastStep = 'button';
+            console.log(`📸 Photo received: file_id=${photo.file_id}, caption="${ctx.message.caption || ''}"`);
             
             await ctx.reply(
-                '📢 Рассылка сообщений\n\n🔹 Шаг 2/2: Кнопка (опционально)\n\nХотите добавить кнопку со ссылкой?',
+                '📢 Шаг 2: Добавить кнопку?',
                 {
                     reply_markup: {
                         inline_keyboard: [
-                            [{ text: '✅ Да, добавить кнопку', callback_data: 'broadcast_add_button' }],
-                            [{ text: '⏭️ Нет, продолжить без кнопки', callback_data: 'broadcast_skip_button' }],
+                            [{ text: '✅ Да', callback_data: 'broadcast_add_button' }],
+                            [{ text: '⏭️ Нет', callback_data: 'broadcast_skip_button' }],
                             [{ text: '🔙 Отмена', callback_data: 'main_menu' }]
                         ]
                     }
@@ -550,7 +523,7 @@ bot.on('photo', async (ctx) => {
         }
     } catch (err) {
         console.error('❌ Error in photo handler:', err);
-        await ctx.reply('Произошла ошибка');
+        await ctx.reply('Произошла ошибка при обработке фото');
     }
 });
 
