@@ -584,7 +584,7 @@ async function showBroadcastPreview(ctx) {
         message += broadcast.text || '(фото без подписи)';
         message += '\n───────────────\n\n';
         
-        if (broadcast.photoFileId) {
+        if (broadcast.photoBuffer) {
             message += '📷 С фото: ДА\n';
         }
         
