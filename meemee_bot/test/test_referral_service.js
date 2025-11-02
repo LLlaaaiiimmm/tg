@@ -18,8 +18,8 @@ async function testReferralService() {
         console.log('1️⃣ Тест пользовательской реферальной программы\n');
         
         // Создаём пользователей
-        await userService.createUser(referrerId, 'referrer_user');
-        await userService.createUser(newUserId, 'new_user');
+        await userService.createUser({ id: referrerId, username: 'referrer_user' });
+        await userService.createUser({ id: newUserId, username: 'new_user' });
         
         console.log('   👥 Пользователи созданы');
         
