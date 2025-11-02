@@ -125,11 +125,11 @@ async function testReferralService() {
         
         // Симулируем много рефералов за день
         const testReferrerId = 999888777;
-        await userService.createUser(testReferrerId, 'suspicious_user');
+        await userService.createUser({ id: testReferrerId, username: 'suspicious_user' });
         
         for (let i = 0; i < 12; i++) {
             const fakeUserId = 200000000 + i;
-            await userService.createUser(fakeUserId, `fake_${i}`);
+            await userService.createUser({ id: fakeUserId, username: `fake_${i}` });
             await referralService.processReferral(testReferrerId, fakeUserId);
         }
         
