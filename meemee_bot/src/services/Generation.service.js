@@ -107,65 +107,54 @@ export class GenerationService {
         }
     }
 
-    // Генерация видео через Google Veo3 API
+    // Генерация видео через Kie.ai Sora 2 API
     async generateVideo(prompt) {
         try {
             if (!this.apiKey) {
-                throw new Error('Google Veo3 API key not configured');
+                throw new Error('Kie.ai API key not configured');
             }
 
-            console.log('🎬 Starting video generation with Veo3...');
+            console.log('🎬 Starting video generation with Kie.ai Sora 2...');
             console.log('Prompt:', prompt);
 
-            // Реальный API запрос к Google Veo 3.1
+            // Создание задачи через Kie.ai Sora 2 API
             const response = await axios.post(
-                `${this.apiUrl}/models/${this.modelName}:generateContent?key=${this.apiKey}`,
+                `${this.apiUrl}/createTask`,
                 {
-                    contents: [{
-                        parts: [{
-                            text: prompt
-                        }]
-                    }],
-                    generationConfig: {
-                        responseCount: 1,
-                        aspectRatio: '16:9',
-                        duration: 5
+                    model: this.modelName,
+                    input: {
+                        prompt: prompt,
+                        aspect_ratio: 'landscape', // 16:9 формат
+                        n_frames: '10', // 10 секунд
+                        remove_watermark: true
                     }
                 },
                 {
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.apiKey}`
                     },
-                    timeout: 300000 // 5 минут
+                    timeout: 30000 // 30 секунд для создания задачи
                 }
             );
 
             console.log('API Response:', JSON.stringify(response.data, null, 2));
 
-            // Обработка ответа
-            if (response.data && response.data.candidates && response.data.candidates.length > 0) {
-                const candidate = response.data.candidates[0];
+            // Проверка ответа
+            if (response.data && response.data.code === 200 && response.data.data && response.data.data.taskId) {
+                const taskId = response.data.data.taskId;
+                console.log('✅ Task created successfully. Task ID:', taskId);
+                console.log('⏳ Starting polling for task completion...');
                 
-                // Если видео готово сразу
-                if (candidate.content && candidate.content.parts && candidate.content.parts[0].video) {
-                    const videoUri = candidate.content.parts[0].video.uri;
-                    console.log('✅ Video URL received:', videoUri);
-                    return videoUri;
-                }
-                
-                // Если есть operation ID для polling
-                if (response.data.name || response.data.operation) {
-                    const operationName = response.data.name || response.data.operation;
-                    console.log('⏳ Operation started:', operationName);
-                    return await this.pollVideoGeneration(operationName);
-                }
+                // Запускаем polling для проверки статуса
+                return await this.pollVideoGeneration(taskId);
             }
 
-            throw new Error('Invalid API response: no video or operation ID');
+            throw new Error('Invalid API response: ' + (response.data.message || 'no task ID received'));
         } catch (err) {
             console.error(`❌ Video generation error: ${err.message}`);
             if (err.response) {
-                console.error('API Error Response:', err.response.data);
+                console.error('API Error Response:', JSON.stringify(err.response.data, null, 2));
             }
             throw err;
         }
