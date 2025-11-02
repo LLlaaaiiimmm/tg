@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { loadMemes } from '../src/utils/memeLoader.js';
+import { loadAllMemes } from '../src/utils/memeLoader.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -13,7 +13,7 @@ async function testMemeLoader() {
     try {
         console.log('1️⃣ Тест загрузки всех мемов\n');
         
-        const memes = await loadMemes();
+        const memes = loadAllMemes();
         
         console.log(`   ✅ Загружено мемов: ${memes.length}`);
         
