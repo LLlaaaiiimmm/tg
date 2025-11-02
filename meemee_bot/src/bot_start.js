@@ -239,7 +239,63 @@ bot.on('text', async (ctx) => {
     try {
         ctx.session = ctx.session || {};
         
-        if (ctx.session.waitingFor === 'name') {
+        if (ctx.session.waitingFor === 'free_prompt') {
+            const prompt = ctx.message.text.trim();
+            
+            // Валидация промпта
+            if (prompt.length < 10) {
+                return await ctx.reply('❌ Промпт слишком короткий. Опишите подробнее (минимум 10 символов).');
+            }
+            
+            if (prompt.length > 500) {
+                return await ctx.reply('❌ Промпт слишком длинный. Максимум 500 символов.');
+            }
+            
+            // Проверка на спам и запрещённые слова
+            const badWords = [
+                'хуй', 'пизд', 'ебл', 'ебан', 'ебат', 'бля', 'сука', 'уеб', 
+                'мудак', 'мудил', 'гандон', 'педик', 'пидор', 'хер', 'манда',
+                'шлюха', 'блядь', 'ублюдок', 'долбоеб', 'говно', 'жопа',
+                'fuck', 'shit', 'bitch', 'ass', 'dick', 'cunt', 'whore'
+            ];
+            const hasBadWords = badWords.some(word => prompt.toLowerCase().includes(word));
+            
+            if (hasBadWords) {
+                return await ctx.reply('❌ Пожалуйста, используйте корректное описание без оскорблений.');
+            }
+            
+            const userId = ctx.from.id;
+            
+            // Списываем квоту
+            const deducted = await userService.deductQuota(userId);
+            if (!deducted) {
+                return await ctx.reply('❌ Недостаточно бесплатных генераций');
+            }
+            
+            // Создаём генерацию с пользовательским промптом
+            const generation = await generationService.createGeneration({
+                userId,
+                memeId: 'custom',
+                name: 'Custom',
+                gender: 'male',
+                customPrompt: prompt
+            });
+            
+            if (generation.error) {
+                // Возвращаем квоту при ошибке
+                await userService.refundQuota(userId);
+                return await ctx.reply('❌ Ошибка создания генерации: ' + generation.error);
+            }
+            
+            await ctx.reply(MESSAGES.GENERATION_STARTED);
+            
+            // Ожидаем завершения генерации
+            await waitForGeneration(ctx, generation.generationId);
+            
+            // Очищаем сессию
+            delete ctx.session.waitingFor;
+            
+        } else if (ctx.session.waitingFor === 'name') {
             const name = ctx.message.text.trim();
             
             // Валидация имени
