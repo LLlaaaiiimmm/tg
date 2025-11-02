@@ -619,11 +619,11 @@ bot.action('broadcast_confirm', async (ctx) => {
 
         const allUsers = await userService.getAllUsers();
         const broadcast = ctx.session.broadcast;
-        const { text, photoFileId, buttonText, buttonUrl } = broadcast;
+        const { text, photoBuffer, buttonText, buttonUrl } = broadcast;
         
         console.log('\n📤 Starting broadcast...');
         console.log(`  Recipients: ${allUsers.length}`);
-        console.log(`  Has photo: ${!!photoFileId}`);
+        console.log(`  Has photo: ${!!photoBuffer}`);
         console.log(`  Has text: ${!!text}`);
         console.log(`  Has button: ${!!buttonText}`);
         
@@ -637,19 +637,19 @@ bot.action('broadcast_confirm', async (ctx) => {
         let success = 0;
         let failed = 0;
         
-        // Подготавливаем опции сообщения
-        const messageOptions = {};
+        // Подготавливаем опции для фото
+        const photoOptions = {};
         if (text) {
-            messageOptions.caption = text;
-            messageOptions.parse_mode = 'HTML';
+            photoOptions.caption = text;
+            photoOptions.parse_mode = 'HTML';
         }
         if (buttonText && buttonUrl) {
-            messageOptions.reply_markup = {
+            photoOptions.reply_markup = {
                 inline_keyboard: [[{ text: buttonText, url: buttonUrl }]]
             };
         }
         
-        // Если только текст без фото
+        // Опции для текста
         const textOptions = { parse_mode: 'HTML' };
         if (buttonText && buttonUrl) {
             textOptions.reply_markup = {
@@ -665,9 +665,13 @@ bot.action('broadcast_confirm', async (ctx) => {
                     continue;
                 }
                 
-                if (photoFileId) {
-                    // Отправка с фото
-                    await mainBot.telegram.sendPhoto(user.userId, photoFileId, messageOptions);
+                if (photoBuffer) {
+                    // Отправка с фото используя Buffer
+                    await mainBot.telegram.sendPhoto(
+                        user.userId, 
+                        { source: photoBuffer },
+                        photoOptions
+                    );
                 } else if (text) {
                     // Только текст
                     await mainBot.telegram.sendMessage(user.userId, text, textOptions);
