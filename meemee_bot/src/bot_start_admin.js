@@ -530,10 +530,10 @@ bot.on('photo', async (ctx) => {
 // Callback для добавления кнопки
 bot.action('broadcast_add_button', async (ctx) => {
     try {
-        ctx.session.broadcastStep = 'button_text';
+        ctx.session.broadcast.step = 'button_text';
         
         await ctx.editMessageText(
-            '📢 Рассылка сообщений\n\n🔹 Текст кнопки\n\nОтправьте текст, который будет отображаться на кнопке\n\nПример: Перейти в канал',
+            '📢 Шаг 2: Текст кнопки\n\nОтправьте текст для кнопки\n\nПример: Перейти в канал',
             {
                 reply_markup: {
                     inline_keyboard: [
