@@ -406,11 +406,9 @@ bot.action('export_generations', async (ctx) => {
 // Обработка текстовых сообщений
 bot.on('text', async (ctx) => {
     try {
-        // Инициализируем сессию если её нет
-        if (!ctx.session) {
-            ctx.session = {};
-        }
+        if (!ctx.session) ctx.session = {};
         
+        // Поиск пользователя
         if (ctx.session.waitingForUserId) {
             const userId = parseInt(ctx.message.text);
             if (isNaN(userId)) {
@@ -435,32 +433,36 @@ bot.on('text', async (ctx) => {
             
             await ctx.reply(message, ADMIN_MENU);
             delete ctx.session.waitingForUserId;
-            
-        } else if (ctx.session.broadcastStep === 'content') {
-            // Сохраняем текст рассылки
-            ctx.session.broadcastText = ctx.message.text;
-            ctx.session.broadcastStep = 'button';
+            return;
+        }
+        
+        // Рассылка - шаг 1: получение текста
+        if (ctx.session.broadcast && ctx.session.broadcast.step === 'content') {
+            ctx.session.broadcast.text = ctx.message.text;
+            ctx.session.broadcast.step = 'button_choice';
             
             await ctx.reply(
-                '📢 Рассылка сообщений\n\n🔹 Шаг 2/2: Кнопка (опционально)\n\nХотите добавить кнопку со ссылкой?',
+                '📢 Шаг 2: Добавить кнопку?',
                 {
                     reply_markup: {
                         inline_keyboard: [
-                            [{ text: '✅ Да, добавить кнопку', callback_data: 'broadcast_add_button' }],
-                            [{ text: '⏭️ Нет, продолжить без кнопки', callback_data: 'broadcast_skip_button' }],
+                            [{ text: '✅ Да', callback_data: 'broadcast_add_button' }],
+                            [{ text: '⏭️ Нет', callback_data: 'broadcast_skip_button' }],
                             [{ text: '🔙 Отмена', callback_data: 'main_menu' }]
                         ]
                     }
                 }
             );
-            
-        } else if (ctx.session.broadcastStep === 'button_text') {
-            // Сохраняем текст кнопки
-            ctx.session.broadcastButtonText = ctx.message.text;
-            ctx.session.broadcastStep = 'button_url';
+            return;
+        }
+        
+        // Рассылка - текст кнопки
+        if (ctx.session.broadcast && ctx.session.broadcast.step === 'button_text') {
+            ctx.session.broadcast.buttonText = ctx.message.text;
+            ctx.session.broadcast.step = 'button_url';
             
             await ctx.reply(
-                '📢 Рассылка сообщений\n\n🔹 Ссылка кнопки\n\nОтправьте URL ссылки для кнопки\n\nПример: https://t.me/your_channel',
+                '📢 Шаг 3: Отправьте URL для кнопки\n\nПример: https://t.me/your_channel',
                 {
                     reply_markup: {
                         inline_keyboard: [
@@ -469,22 +471,23 @@ bot.on('text', async (ctx) => {
                     }
                 }
             );
-            
-        } else if (ctx.session.broadcastStep === 'button_url') {
-            // Сохраняем URL кнопки
+            return;
+        }
+        
+        // Рассылка - URL кнопки
+        if (ctx.session.broadcast && ctx.session.broadcast.step === 'button_url') {
             const url = ctx.message.text;
             
-            // Простая валидация URL
             try {
                 new URL(url);
-                ctx.session.broadcastButtonUrl = url;
+                ctx.session.broadcast.buttonUrl = url;
+                await showBroadcastPreview(ctx);
             } catch (err) {
-                return await ctx.reply('❌ Некорректный URL. Попробуйте ещё раз.');
+                await ctx.reply('❌ Некорректный URL. Попробуйте ещё раз.');
             }
-            
-            // Показываем превью и подтверждение
-            await showBroadcastPreview(ctx);
+            return;
         }
+        
     } catch (err) {
         console.error('❌ Error in text handler:', err);
         await ctx.reply('Произошла ошибка');
