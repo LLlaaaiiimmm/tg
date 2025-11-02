@@ -12,7 +12,8 @@ import {
     createCryptoKeyboard, 
     createChainKeyboard,
     createPaymentCryptoKeyboard,
-    createAfterPaymentKeyboard 
+    createAfterPaymentKeyboard,
+    createMainMenuKeyboard
 } from './screens/keyboards.js';
 import { getMemeById } from './utils/memeLoader.js';
 
