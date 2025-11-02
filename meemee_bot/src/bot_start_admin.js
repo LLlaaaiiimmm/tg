@@ -560,20 +560,21 @@ bot.action('broadcast_skip_button', async (ctx) => {
 async function showBroadcastPreview(ctx) {
     try {
         const allUsers = await userService.getAllUsers();
+        const broadcast = ctx.session.broadcast;
         
         let message = '📢 Предпросмотр рассылки\n\n';
         message += `👥 Получателей: ${allUsers.length}\n\n`;
         message += '───────────────\n';
-        message += ctx.session.broadcastText;
+        message += broadcast.text || '(фото без подписи)';
         message += '\n───────────────\n\n';
         
-        if (ctx.session.broadcastPhotoBuffer) {
+        if (broadcast.photoFileId) {
             message += '📷 С фото: ДА\n';
         }
         
-        if (ctx.session.broadcastButtonText) {
-            message += `🔘 Кнопка: "${ctx.session.broadcastButtonText}"\n`;
-            message += `🔗 Ссылка: ${ctx.session.broadcastButtonUrl}\n`;
+        if (broadcast.buttonText) {
+            message += `🔘 Кнопка: "${broadcast.buttonText}"\n`;
+            message += `🔗 URL: ${broadcast.buttonUrl}\n`;
         }
         
         message += '\n⚠️ Отправить рассылку?';
