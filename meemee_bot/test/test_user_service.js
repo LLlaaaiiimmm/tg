@@ -23,8 +23,8 @@ async function testUserService() {
         console.log('   ✅ Пользователь создан');
         console.log(`   👤 User ID: ${user.userId}`);
         console.log(`   📝 Username: ${user.username || 'не указан'}`);
-        console.log(`   🎁 Бесплатная квота: ${user.freeQuota}`);
-        console.log(`   💳 Платная квота: ${user.paidQuota}`);
+        console.log(`   🎁 Бесплатная квота: ${user.free_quota}`);
+        console.log(`   💳 Платная квота: ${user.paid_quota}`);
         console.log(`   📅 Создан: ${new Date(user.createdAt).toLocaleString('ru-RU')}`);
         
         console.log('\n2️⃣ Тест получения пользователя\n');
@@ -34,7 +34,7 @@ async function testUserService() {
         
         console.log('\n3️⃣ Тест списания квоты\n');
         
-        console.log(`   Баланс до: Free=${fetchedUser.freeQuota}, Paid=${fetchedUser.paidQuota}`);
+        console.log(`   Баланс до: Free=${fetchedUser.free_quota}, Paid=${fetchedUser.paid_quota}`);
         
         const deducted = await userService.deductQuota(testUserId);
         
