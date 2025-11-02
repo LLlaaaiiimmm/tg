@@ -93,4 +93,31 @@ export function createAfterPaymentKeyboard() {
     };
 }
 
+// Генерация динамической клавиатуры главного меню
+export async function createMainMenuKeyboard(userId) {
+    const user = await userService.getUser(userId);
+    const freeQuota = user?.free_quota || 0;
+    
+    const buttons = [];
+    
+    // Если есть бесплатные генерации, показываем кнопку
+    if (freeQuota > 0) {
+        buttons.push([{
+            text: `🎁 Использовать бесплатную генерацию (осталось: ${freeQuota})`,
+            callback_data: 'use_free_generation'
+        }]);
+    }
+    
+    // Остальные кнопки меню
+    buttons.push(
+        [{ text: '🎬 Доступные мемы', callback_data: 'catalog' }],
+        [{ text: '💳 Купить видео', callback_data: 'buy' }],
+        [{ text: '👤 Личный кабинет', callback_data: 'profile' }],
+        [{ text: '🎁 Приведи друга', callback_data: 'referral' }],
+        [{ text: 'ℹ️ О проекте', callback_data: 'about' }]
+    );
+    
+    return { inline_keyboard: buttons };
+}
+
 export { KEYBOARDS };
