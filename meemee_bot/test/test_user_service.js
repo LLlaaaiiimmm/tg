@@ -41,7 +41,7 @@ async function testUserService() {
         if (deducted) {
             const afterDeduct = await userService.getUser(testUserId);
             console.log(`   ✅ Квота списана`);
-            console.log(`   Баланс после: Free=${afterDeduct.freeQuota}, Paid=${afterDeduct.paidQuota}`);
+            console.log(`   Баланс после: Free=${afterDeduct.free_quota}, Paid=${afterDeduct.paid_quota}`);
         }
         
         console.log('\n4️⃣ Тест добавления платной квоты\n');
@@ -50,7 +50,7 @@ async function testUserService() {
         const afterAdd = await userService.getUser(testUserId);
         
         console.log(`   ✅ Добавлено 10 генераций`);
-        console.log(`   Баланс: Free=${afterAdd.freeQuota}, Paid=${afterAdd.paidQuota}`);
+        console.log(`   Баланс: Free=${afterAdd.free_quota}, Paid=${afterAdd.paid_quota}`);
         
         console.log('\n5️⃣ Тест проверки квоты\n');
         
