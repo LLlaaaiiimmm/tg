@@ -174,11 +174,18 @@ export class GenerationService {
                 return await this.pollVideoGeneration(taskId);
             }
 
-            throw new Error('Invalid API response: ' + (response.data.message || 'no task ID received'));
+            throw new Error('Invalid API response: ' + (response.data?.msg || response.data?.message || 'no task ID received'));
         } catch (err) {
             console.error(`❌ Video generation error: ${err.message}`);
-            if (err.response) {
+            if (err.response && err.response.data) {
                 console.error('API Error Response:', JSON.stringify(err.response.data, null, 2));
+                
+                // Проверяем ошибку в response
+                if (err.response.data.code === 402) {
+                    throw new Error(`❌ Недостаточно кредитов на Kie.ai API: ${err.response.data.msg}`);
+                }
+                
+                throw new Error(`API Error (${err.response.data.code}): ${err.response.data.msg || 'Unknown error'}`);
             }
             throw err;
         }
