@@ -86,7 +86,7 @@ export class GenerationService {
             // Обновляем статус
             await this.updateGeneration(generationId, { status: 'processing' });
 
-            // Вызов Google Veo3 API
+            // Вызов Kie.ai Sora 2 API
             const videoUrl = await this.generateVideo(generation.prompt);
 
             if (videoUrl) {
