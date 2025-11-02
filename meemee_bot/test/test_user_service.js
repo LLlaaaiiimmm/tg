@@ -63,7 +63,7 @@ async function testUserService() {
         const afterRefund = await userService.getUser(testUserId);
         
         console.log(`   ✅ Квота возвращена`);
-        console.log(`   Баланс: Free=${afterRefund.freeQuota}, Paid=${afterRefund.paidQuota}`);
+        console.log(`   Баланс: Free=${afterRefund.free_quota}, Paid=${afterRefund.paid_quota}`);
         
         console.log('\n7️⃣ Тест списания всех квот\n');
         
