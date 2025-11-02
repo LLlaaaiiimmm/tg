@@ -596,150 +596,83 @@ async function showBroadcastPreview(ctx) {
 // Подтверждение и отправка рассылки
 bot.action('broadcast_confirm', async (ctx) => {
     try {
-        // Проверяем сессию
-        if (!ctx.session || !ctx.session.broadcastText) {
-            await ctx.answerCbQuery('❌ Ошибка: текст рассылки не найден', { show_alert: true });
+        if (!ctx.session || !ctx.session.broadcast) {
+            await ctx.answerCbQuery('❌ Ошибка: данные рассылки не найдены', { show_alert: true });
             return;
         }
 
         const allUsers = await userService.getAllUsers();
-        const text = ctx.session.broadcastText;
-        const photoBuffer = ctx.session.broadcastPhotoBuffer;
-        const buttonText = ctx.session.broadcastButtonText;
-        const buttonUrl = ctx.session.broadcastButtonUrl;
+        const broadcast = ctx.session.broadcast;
+        const { text, photoFileId, buttonText, buttonUrl } = broadcast;
         
-        console.log(`\n${'='.repeat(60)}`);
-        console.log(`📤 Starting broadcast to ${allUsers.length} users`);
-        console.log(`Session data check:`);
-        console.log(`  - broadcastText: ${ctx.session.broadcastText ? 'EXISTS' : 'MISSING'}`);
-        console.log(`  - broadcastPhotoBuffer: ${ctx.session.broadcastPhotoBuffer ? 'EXISTS' : 'MISSING'}`);
-        console.log(`  - broadcastButtonText: ${ctx.session.broadcastButtonText || 'N/A'}`);
-        console.log(`  - broadcastButtonUrl: ${ctx.session.broadcastButtonUrl || 'N/A'}`);
-        console.log(`Text: "${text}"`);
-        console.log(`Photo: ${photoBuffer ? 'YES' : 'NO'}, Button: ${buttonText ? 'YES' : 'NO'}`);
-        if (photoBuffer) {
-            console.log(`Photo buffer base64 length: ${photoBuffer.length}`);
-            console.log(`Photo buffer sample (first 50 chars): ${photoBuffer.substring(0, 50)}...`);
-        } else {
-            console.log(`⚠️ WARNING: photoBuffer is ${photoBuffer} - это может быть проблема!`);
-        }
-        if (buttonText && buttonUrl) {
-            console.log(`Button text: "${buttonText}"`);
-            console.log(`Button URL: ${buttonUrl}`);
-        }
-        console.log(`${'='.repeat(60)}\n`);
-        
-        if (!text) {
-            await ctx.editMessageText('❌ Ошибка: текст рассылки пуст!', ADMIN_MENU);
-            return;
-        }
+        console.log('\n📤 Starting broadcast...');
+        console.log(`  Recipients: ${allUsers.length}`);
+        console.log(`  Has photo: ${!!photoFileId}`);
+        console.log(`  Has text: ${!!text}`);
+        console.log(`  Has button: ${!!buttonText}`);
         
         if (allUsers.length === 0) {
-            await ctx.editMessageText('❌ Не найдено ни одного пользователя для рассылки!', ADMIN_MENU);
+            await ctx.editMessageText('❌ Нет пользователей для рассылки!', ADMIN_MENU);
             return;
         }
+        
+        await ctx.editMessageText(`📤 Начинаю рассылку ${allUsers.length} пользователям...`);
         
         let success = 0;
         let failed = 0;
         
-        await ctx.editMessageText(`📤 Начинаю рассылку ${allUsers.length} пользователям...`);
+        // Подготавливаем опции сообщения
+        const messageOptions = {};
+        if (text) {
+            messageOptions.caption = text;
+            messageOptions.parse_mode = 'HTML';
+        }
+        if (buttonText && buttonUrl) {
+            messageOptions.reply_markup = {
+                inline_keyboard: [[{ text: buttonText, url: buttonUrl }]]
+            };
+        }
         
+        // Если только текст без фото
+        const textOptions = { parse_mode: 'HTML' };
+        if (buttonText && buttonUrl) {
+            textOptions.reply_markup = {
+                inline_keyboard: [[{ text: buttonText, url: buttonUrl }]]
+            };
+        }
+        
+        // Рассылка
         for (const user of allUsers) {
             try {
-                // Проверяем что userId существует
                 if (!user.userId) {
-                    console.log(`⚠️ Skipping user without userId:`, user);
                     failed++;
                     continue;
                 }
-
-                // Отправляем с фото или без
-                if (photoBuffer) {
-                    console.log(`\n📤 Sending to user ${user.userId}...`);
-                    console.log(`  Converting base64 to Buffer...`);
-                    
-                    // Преобразуем base64 обратно в Buffer
-                    const photo = Buffer.from(photoBuffer, 'base64');
-                    console.log(`  ✅ Buffer created: ${photo.length} bytes`);
-                    console.log(`  Buffer sample (first 20 bytes): ${photo.slice(0, 20).toString('hex')}`);
-                    
-                    // Формируем опции для sendPhoto явно
-                    const photoOptions = {};
-                    
-                    // Добавляем caption только если есть текст
-                    if (text && text.trim()) {
-                        photoOptions.caption = text;
-                        photoOptions.parse_mode = 'HTML';
-                    }
-                    
-                    // Добавляем кнопку если есть
-                    if (buttonText && buttonUrl) {
-                        console.log(`  Adding button: "${buttonText}" -> ${buttonUrl}`);
-                        photoOptions.reply_markup = {
-                            inline_keyboard: [
-                                [{ text: buttonText, url: buttonUrl }]
-                            ]
-                        };
-                    }
-                    
-                    console.log(`  Caption length: ${text.length} chars`);
-                    console.log(`  Calling mainBot.telegram.sendPhoto...`);
-                    console.log(`  Photo source type: ${typeof photo}, isBuffer: ${Buffer.isBuffer(photo)}`);
-                    
-                    // Пробуем использовать Input.fromBuffer
-                    let photoInput;
-                    try {
-                        console.log(`  Trying Input.fromBuffer...`);
-                        photoInput = Input.fromBuffer(photo);
-                        console.log(`  ✅ Input.fromBuffer created successfully`);
-                    } catch (e) {
-                        console.log(`  ⚠️ Input.fromBuffer failed, using { source: photo }`);
-                        photoInput = { source: photo };
-                    }
-                    
-                    console.log(`  Photo input type:`, typeof photoInput);
-                    
-                    await mainBot.telegram.sendPhoto(user.userId, photoInput, photoOptions);
-                    console.log(`  ✅ Successfully sent to ${user.userId}`);
-                } else {
-                    console.log(`\n📤 Sending text message to user ${user.userId}...`);
-                    
-                    // Для текстового сообщения
-                    const textOptions = { parse_mode: 'HTML' };
-                    
-                    // Добавляем кнопку если есть
-                    if (buttonText && buttonUrl) {
-                        textOptions.reply_markup = {
-                            inline_keyboard: [
-                                [{ text: buttonText, url: buttonUrl }]
-                            ]
-                        };
-                    }
-                    
+                
+                if (photoFileId) {
+                    // Отправка с фото
+                    await mainBot.telegram.sendPhoto(user.userId, photoFileId, messageOptions);
+                } else if (text) {
+                    // Только текст
                     await mainBot.telegram.sendMessage(user.userId, text, textOptions);
-                    console.log(`  ✅ Successfully sent to ${user.userId}`);
+                } else {
+                    console.log(`⚠️ Skip user ${user.userId}: no content`);
+                    failed++;
+                    continue;
                 }
                 
                 success++;
-                console.log(`✅ Sent to user ${user.userId} (${success}/${allUsers.length})`);
                 
-                // Задержка чтобы не превысить лимиты Telegram (30 сообщений в секунду)
+                // Задержка 50мс между сообщениями
                 await new Promise(resolve => setTimeout(resolve, 50));
+                
             } catch (err) {
                 failed++;
-                console.error(`\n❌ Failed to send to ${user.userId}`);
-                console.error(`  Error message: ${err.message}`);
-                console.error(`  Error code: ${err.code}`);
-                if (err.response) {
-                    console.error(`  Response description:`, err.response.description);
-                    console.error(`  Response error_code:`, err.response.error_code);
-                    console.error(`  Full response:`, JSON.stringify(err.response, null, 2));
-                }
-                console.error(`  Error stack:`, err.stack);
+                console.error(`❌ Failed to send to ${user.userId}: ${err.message}`);
             }
         }
         
-        console.log(`📊 Broadcast completed: ${success} success, ${failed} failed`);
+        console.log(`✅ Broadcast complete: ${success} sent, ${failed} failed\n`);
         
         await ctx.reply(
             `✅ Рассылка завершена!\n\n✔️ Отправлено: ${success}\n❌ Ошибок: ${failed}`,
@@ -747,15 +680,11 @@ bot.action('broadcast_confirm', async (ctx) => {
         );
         
         // Очищаем сессию
-        delete ctx.session.broadcastStep;
-        delete ctx.session.broadcastText;
-        delete ctx.session.broadcastPhotoBuffer;
-        delete ctx.session.broadcastButtonText;
-        delete ctx.session.broadcastButtonUrl;
+        delete ctx.session.broadcast;
+        
     } catch (err) {
         console.error('❌ Error in broadcast confirm:', err);
-        console.error('Error stack:', err.stack);
-        await ctx.reply('❌ Произошла ошибка при рассылке: ' + err.message);
+        await ctx.reply('❌ Ошибка при рассылке: ' + err.message);
     }
 });
 
