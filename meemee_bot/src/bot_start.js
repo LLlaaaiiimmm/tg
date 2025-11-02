@@ -124,6 +124,30 @@ bot.action('main_menu', async (ctx) => {
     }
 });
 
+// Обработка кнопки "Использовать бесплатную генерацию"
+bot.action('use_free_generation', async (ctx) => {
+    try {
+        const userId = ctx.from.id;
+        const user = await userService.getUser(userId);
+        
+        // Проверяем, есть ли бесплатные генерации
+        if (!user || user.free_quota <= 0) {
+            await ctx.answerCbQuery('❌ У вас нет бесплатных генераций', { show_alert: true });
+            return;
+        }
+        
+        // Перенаправляем на каталог мемов
+        const keyboard = createCatalogKeyboard(0);
+        await ctx.editMessageText(
+            `🎁 Используйте бесплатную генерацию!\n\n${MESSAGES.MEMES_CATALOG}`, 
+            { reply_markup: keyboard }
+        );
+    } catch (err) {
+        console.error('❌ Error in use_free_generation:', err);
+        await ctx.answerCbQuery('Произошла ошибка');
+    }
+});
+
 // Обработка каталога мемов
 bot.action(/catalog.*/, async (ctx) => {
     try {
