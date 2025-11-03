@@ -160,9 +160,13 @@ export async function handleCryptoSelect(ctx, crypto, packageKey = 'single') {
 // Обработчик выбора сети
 export async function handleChainSelect(ctx, crypto, chain, packageKey = 'single') {
     try {
+        console.log('🔗 Chain selected:', { crypto, chain, packageKey });
+        
         const userId = ctx.from.id;
         const payCurrency = chain.replace(/_/g, ' ');
         const pkg = PACKAGES[packageKey];
+        
+        console.log('💰 Payment params:', { userId, payCurrency, amount: pkg.usdt, package: packageKey });
         
         // Создаём платёж
         const payment = await paymentCryptoService.createPayment({
@@ -173,6 +177,7 @@ export async function handleChainSelect(ctx, crypto, chain, packageKey = 'single
         });
         
         if (payment.error) {
+            console.error('❌ Payment creation error:', payment.error);
             return await ctx.answerCbQuery(payment.error, { show_alert: true });
         }
         
@@ -180,6 +185,8 @@ export async function handleChainSelect(ctx, crypto, chain, packageKey = 'single
         const address = payment.output.address;
         const amount = payment.input.amount; // Используем input.amount вместо output.amount
         const destinationTag = payment.output.destinationTag;
+        
+        console.log('✅ Payment created:', { orderId: payment.orderId, address, amount, destinationTag });
         
         let message = `${pkg.emoji} ${pkg.title}\n\n`;
         message += `💎 Отправьте <code>${amount}</code> ${crypto}\n\n`;
@@ -201,6 +208,7 @@ export async function handleChainSelect(ctx, crypto, chain, packageKey = 'single
         });
     } catch (err) {
         console.error('❌ Error in handleChainSelect:', err);
+        console.error('Stack:', err.stack);
         await ctx.answerCbQuery('Произошла ошибка');
     }
 }
