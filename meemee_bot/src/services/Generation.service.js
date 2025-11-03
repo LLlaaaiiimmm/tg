@@ -9,11 +9,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export class GenerationService {
-    constructor() {
+    constructor(bot = null) {
         this.apiKey = process.env.KIE_AI_API_KEY;
         // Kie.ai Sora 2 API endpoint
         this.apiUrl = `https://api.kie.ai/api/v1/jobs`;
         this.modelName = 'sora-2-text-to-video';
+        this.bot = bot; // Telegram bot instance для отправки уведомлений
     }
 
     // Загрузка промпта мема
