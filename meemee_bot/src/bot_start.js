@@ -621,6 +621,53 @@ bot.on('callback_query', async (ctx) => {
     await ctx.answerCbQuery('Функция в разработке');
 });
 
+// Функция уведомления админов об ошибке
+async function notifyAdminsAboutError(error, ctx) {
+    try {
+        const { ADMINS } = await import('./config.js');
+        const adminBotToken = process.env.BOT_TOKEN_ADMIN;
+        
+        if (!adminBotToken || !ADMINS || ADMINS.length === 0) {
+            return;
+        }
+        
+        const { Telegraf } = await import('telegraf');
+        const adminBot = new Telegraf(adminBotToken);
+        
+        const time = new Date().toLocaleString('ru-RU');
+        let message = `🔴 ОШИБКА В БОТЕ\n\n`;
+        message += `⏰ Время: ${time}\n`;
+        message += `❌ Тип: ${error.name || 'Error'}\n`;
+        message += `💬 Сообщение: ${error.message}\n`;
+        
+        if (ctx?.from?.id) {
+            message += `👤 User ID: ${ctx.from.id}\n`;
+        }
+        
+        if (error.stack) {
+            const stackLines = error.stack.split('\n').slice(0, 3);
+            message += `\n📍 Stack:\n${stackLines.join('\n')}`;
+        }
+        
+        // Отправляем всем админам
+        for (const adminId of ADMINS) {
+            try {
+                await adminBot.telegram.sendMessage(adminId, message, {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '❌ Посмотреть все ошибки', callback_data: 'errors' }]
+                        ]
+                    }
+                });
+            } catch (sendErr) {
+                console.error(`Failed to notify admin ${adminId}:`, sendErr.message);
+            }
+        }
+    } catch (err) {
+        console.error('Failed to notify admins about error:', err);
+    }
+}
+
 // Обработка ошибок
 bot.catch(async (err, ctx) => {
     console.error('❌ Bot error:', err);
