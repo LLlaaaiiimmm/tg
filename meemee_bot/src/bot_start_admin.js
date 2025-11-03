@@ -830,7 +830,7 @@ bot.on('text', async (ctx) => {
         if (ctx.session.waitingForUserId) {
             const userId = parseInt(ctx.message.text);
             if (isNaN(userId)) {
-                return await ctx.reply('❌ Некорректный ID');
+                return await ctx.reply('❌ Некорректный ID. Отправьте число.');
             }
             
             const user = await userService.getUser(userId);
@@ -842,10 +842,11 @@ bot.on('text', async (ctx) => {
             message += `📝 Имя: ${user.firstName || ''} ${user.lastName || ''}\n`;
             message += `🆔 Username: @${user.username || 'нет'}\n\n`;
             message += `🎬 Генерации:\n`;
-            message += `├─ Бесплатных: ${user.free_quota}\n`;
-            message += `├─ Платных: ${user.paid_quota}\n`;
-            message += `├─ Всего сделано: ${user.successful_generations || 0}\n`;
-            message += `└─ Ошибок: ${user.failed_generations || 0}\n\n`;
+            message += `├─ 🎁 Бесплатных: ${user.free_quota || 0}\n`;
+            message += `├─ 💎 Платных: ${user.paid_quota || 0}\n`;
+            message += `├─ 📊 Всего доступно: ${(user.free_quota || 0) + (user.paid_quota || 0)}\n`;
+            message += `├─ ✅ Успешно сделано: ${user.successful_generations || 0}\n`;
+            message += `└─ ❌ Ошибок: ${user.failed_generations || 0}\n\n`;
             message += `💰 Потрачено: ${user.total_spent || 0}₽\n`;
             message += `📅 Регистрация: ${new Date(user.createdAt).toLocaleDateString('ru-RU')}`;
             
@@ -856,11 +857,108 @@ bot.on('text', async (ctx) => {
                             { text: '➕ Добавить генерации', callback_data: `add_quota_${userId}` },
                             { text: '➖ Убрать генерации', callback_data: `remove_quota_${userId}` }
                         ],
-                        [{ text: '🔙 Назад', callback_data: 'main_menu' }]
+                        [{ text: '🔍 Найти другого', callback_data: 'users' }],
+                        [{ text: '🔙 Главное меню', callback_data: 'main_menu' }]
                     ]
                 }
             });
             delete ctx.session.waitingForUserId;
+            return;
+        }
+        
+        // Ручное добавление генераций
+        if (ctx.session.quotaAction && ctx.session.quotaAction.type === 'add_custom') {
+            const amount = parseInt(ctx.message.text);
+            if (isNaN(amount) || amount <= 0) {
+                return await ctx.reply('❌ Некорректное количество. Отправьте положительное число.');
+            }
+            
+            const userId = ctx.session.quotaAction.userId;
+            const user = await userService.getUser(userId);
+            
+            if (!user) {
+                return await ctx.reply('❌ Пользователь не найден');
+            }
+            
+            const oldQuota = user.free_quota;
+            await userService.addFreeQuota(userId, amount);
+            const newQuota = oldQuota + amount;
+            
+            await ctx.reply(
+                `✅ Генерации добавлены!\n\n` +
+                `👤 User ID: ${userId}\n` +
+                `📊 Было: ${oldQuota}\n` +
+                `➕ Добавлено: ${amount}\n` +
+                `📊 Стало: ${newQuota}`,
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '👤 Посмотреть пользователя', callback_data: `show_user_${userId}` }],
+                            [{ text: '🔙 Главное меню', callback_data: 'main_menu' }]
+                        ]
+                    }
+                }
+            );
+            
+            // Уведомляем пользователя
+            try {
+                await mainBot.telegram.sendMessage(
+                    userId,
+                    `🎁 Вам начислено ${amount} бесплатных генераций!\n\n💎 Ваш новый баланс: ${newQuota} генераций`
+                );
+            } catch (notifyErr) {
+                console.log(`⚠️ Could not notify user ${userId}: ${notifyErr.message}`);
+            }
+            
+            delete ctx.session.quotaAction;
+            return;
+        }
+        
+        // Ручное удаление генераций
+        if (ctx.session.quotaAction && ctx.session.quotaAction.type === 'remove_custom') {
+            const amount = parseInt(ctx.message.text);
+            if (isNaN(amount) || amount <= 0) {
+                return await ctx.reply('❌ Некорректное количество. Отправьте положительное число.');
+            }
+            
+            const userId = ctx.session.quotaAction.userId;
+            const user = await userService.getUser(userId);
+            
+            if (!user) {
+                return await ctx.reply('❌ Пользователь не найден');
+            }
+            
+            const oldQuota = user.free_quota;
+            await userService.removeFreeQuota(userId, amount);
+            const newQuota = Math.max(0, oldQuota - amount);
+            
+            await ctx.reply(
+                `✅ Генерации удалены!\n\n` +
+                `👤 User ID: ${userId}\n` +
+                `📊 Было: ${oldQuota}\n` +
+                `➖ Удалено: ${amount}\n` +
+                `📊 Стало: ${newQuota}`,
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '👤 Посмотреть пользователя', callback_data: `show_user_${userId}` }],
+                            [{ text: '🔙 Главное меню', callback_data: 'main_menu' }]
+                        ]
+                    }
+                }
+            );
+            
+            // Уведомляем пользователя
+            try {
+                await mainBot.telegram.sendMessage(
+                    userId,
+                    `⚠️ С вашего баланса списано ${amount} генераций администратором.\n\n💎 Ваш новый баланс: ${newQuota} генераций`
+                );
+            } catch (notifyErr) {
+                console.log(`⚠️ Could not notify user ${userId}: ${notifyErr.message}`);
+            }
+            
+            delete ctx.session.quotaAction;
             return;
         }
         
