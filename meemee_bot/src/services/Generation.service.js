@@ -210,9 +210,19 @@ export class GenerationService {
                 errorId: errorData.id
             });
             
-            // Получаем генерацию для доступа к chatId
+            // Получаем генерацию для доступа к chatId и userId
             const generation = await this.getGeneration(generationId);
             if (generation) {
+                // Увеличиваем счетчик ошибок
+                if (generation.userId) {
+                    const user = await this.userService.getUser(generation.userId);
+                    if (user) {
+                        await this.userService.updateUser(generation.userId, {
+                            failed_generations: (user.failed_generations || 0) + 1
+                        });
+                    }
+                }
+                
                 // Отправляем уведомление об ошибке
                 await this.notifyUser(generation.chatId || generation.userId, {
                     status: 'failed',
