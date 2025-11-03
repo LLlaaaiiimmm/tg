@@ -622,8 +622,25 @@ bot.on('callback_query', async (ctx) => {
 });
 
 // Обработка ошибок
-bot.catch((err, ctx) => {
+bot.catch(async (err, ctx) => {
     console.error('❌ Bot error:', err);
+    
+    // Логируем ошибку в систему
+    await errorLogger.logError({
+        message: err.message,
+        stack: err.stack,
+        name: err.name || 'BotError',
+        source: 'Main Bot',
+        context: {
+            userId: ctx?.from?.id,
+            chatId: ctx?.chat?.id,
+            updateType: ctx?.updateType
+        }
+    });
+    
+    // Отправляем уведомление админам
+    await notifyAdminsAboutError(err, ctx);
+    
     if (ctx) {
         ctx.reply('Произошла ошибка. Попробуйте позже или обратитесь в поддержку.')
             .catch(e => console.error('Failed to send error message:', e));
