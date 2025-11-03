@@ -451,4 +451,72 @@ export class GenerationService {
             .sort((a, b) => b.count - a.count)
             .slice(0, 10);
     }
+
+    // Отправка уведомления пользователю о завершении генерации
+    async notifyUser(chatId, data) {
+        if (!this.bot) {
+            console.log('⚠️ Bot instance not provided, skipping notification');
+            return;
+        }
+
+        try {
+            if (data.status === 'success' && data.videoUrl) {
+                console.log(`📤 Sending video to user ${chatId}...`);
+                
+                try {
+                    // Пытаемся отправить видео
+                    await this.bot.telegram.sendVideo(
+                        chatId,
+                        { url: data.videoUrl },
+                        { 
+                            caption: '✅ Ваше видео готово!\n\n🎬 Генерация успешно завершена!',
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [{ text: '🎬 Создать ещё', callback_data: 'catalog' }],
+                                    [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
+                                ]
+                            }
+                        }
+                    );
+                    console.log(`✅ Video sent successfully to user ${chatId}`);
+                } catch (videoErr) {
+                    console.error(`❌ Failed to send video, sending link instead:`, videoErr.message);
+                    
+                    // Если не удалось отправить видео, отправляем ссылку
+                    await this.bot.telegram.sendMessage(
+                        chatId,
+                        `✅ Ваше видео готово!\n\n🎬 Генерация успешно завершена!\n\n🔗 Ссылка на видео: ${data.videoUrl}`,
+                        {
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [{ text: '🎬 Создать ещё', callback_data: 'catalog' }],
+                                    [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
+                                ]
+                            }
+                        }
+                    );
+                }
+            } else if (data.status === 'failed') {
+                console.log(`📤 Sending failure notification to user ${chatId}...`);
+                
+                await this.bot.telegram.sendMessage(
+                    chatId,
+                    `❌ К сожалению, не удалось создать видео.\n\n` +
+                    `Ошибка: ${data.error}\n\n` +
+                    `💰 Ваша генерация возвращена на баланс.`,
+                    {
+                        reply_markup: {
+                            inline_keyboard: [
+                                [{ text: '🔄 Попробовать снова', callback_data: 'catalog' }],
+                                [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
+                            ]
+                        }
+                    }
+                );
+                console.log(`✅ Failure notification sent to user ${chatId}`);
+            }
+        } catch (err) {
+            console.error(`❌ Failed to send notification to user ${chatId}:`, err.message);
+        }
+    }
 }
