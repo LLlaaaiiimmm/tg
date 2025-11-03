@@ -434,9 +434,13 @@ bot.action('confirm_gen', async (ctx) => {
     }
 });
 
-// Функция ожидания завершения генерации
-async function waitForGeneration(ctx, generationId, maxAttempts = 60) {
-    for (let i = 0; i < maxAttempts; i++) {
+// Функция быстрой проверки статуса генерации
+async function waitForGeneration(ctx, generationId, quickCheckAttempts = 10) {
+    // Делаем быструю проверку в течение 30 секунд (10 попыток по 3 секунды)
+    // Если видео готово быстро - отправляем сразу
+    // Иначе сообщаем что видео придет позже автоматически
+    
+    for (let i = 0; i < quickCheckAttempts; i++) {
         await new Promise(resolve => setTimeout(resolve, 3000)); // Проверяем каждые 3 секунды
         
         const generation = await generationService.getGeneration(generationId);
@@ -445,24 +449,65 @@ async function waitForGeneration(ctx, generationId, maxAttempts = 60) {
             try {
                 await ctx.replyWithVideo(
                     { url: generation.videoUrl },
-                    { caption: MESSAGES.GENERATION_SUCCESS }
+                    { 
+                        caption: '✅ Ваше видео готово!\n\n🎬 Генерация успешно завершена!',
+                        reply_markup: {
+                            inline_keyboard: [
+                                [{ text: '🎬 Создать ещё', callback_data: 'catalog' }],
+                                [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
+                            ]
+                        }
+                    }
                 );
             } catch (err) {
                 await ctx.reply(
-                    MESSAGES.GENERATION_SUCCESS + '\n\nСсылка на видео: ' + generation.videoUrl
+                    '✅ Ваше видео готово!\n\n🎬 Генерация успешно завершена!\n\n' +
+                    '🔗 Ссылка на видео: ' + generation.videoUrl,
+                    {
+                        reply_markup: {
+                            inline_keyboard: [
+                                [{ text: '🎬 Создать ещё', callback_data: 'catalog' }],
+                                [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
+                            ]
+                        }
+                    }
                 );
             }
             return;
         } else if (generation.status === 'failed') {
             // Возвращаем квоту
             await userService.refundQuota(ctx.from.id);
-            await ctx.reply(MESSAGES.GENERATION_FAILED);
+            await ctx.reply(
+                '❌ К сожалению, не удалось создать видео.\n\n' +
+                `Ошибка: ${generation.error}\n\n` +
+                '💰 Ваша генерация возвращена на баланс.',
+                {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '🔄 Попробовать снова', callback_data: 'catalog' }],
+                            [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
+                        ]
+                    }
+                }
+            );
             return;
         }
     }
     
-    // Timeout
-    await ctx.reply('⏰ Генерация занимает больше времени. Мы отправим вам видео, когда оно будет готово.');
+    // Если за 30 секунд видео не готово - сообщаем что оно придет автоматически
+    await ctx.reply(
+        '⏳ Ваше видео генерируется!\n\n' +
+        '🎬 Генерация займет 1-3 минуты. Мы автоматически отправим вам видео, когда оно будет готово.\n\n' +
+        '✨ Вы можете продолжать пользоваться ботом!',
+        {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '🎬 Создать ещё', callback_data: 'catalog' }],
+                    [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
+                ]
+            }
+        }
+    );
 }
 
 // Импорт контроллеров платежей
