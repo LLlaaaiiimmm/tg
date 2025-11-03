@@ -444,8 +444,8 @@ bot.action(/remove_quota_(\d+)/, async (ctx) => {
         await ctx.editMessageText(
             `➖ Удаление генераций\n\n` +
             `👤 User ID: ${userId}\n` +
-            `📊 Текущий баланс: ${user.free_quota}\n\n` +
-            `📝 Отправьте количество генераций для удаления:`,
+            `📊 Текущий баланс: ${user.free_quota} бесплатных, ${user.paid_quota} платных\n\n` +
+            `📝 Выберите количество генераций для удаления:`,
             {
                 reply_markup: {
                     inline_keyboard: [
@@ -455,9 +455,10 @@ bot.action(/remove_quota_(\d+)/, async (ctx) => {
                             { text: '-10', callback_data: `remove_quota_confirm_${userId}_10` }
                         ],
                         [
-                            { text: 'Обнулить', callback_data: `remove_quota_confirm_${userId}_${user.free_quota}` }
+                            { text: 'Обнулить все', callback_data: `remove_quota_confirm_${userId}_${user.free_quota}` }
                         ],
-                        [{ text: '🔙 Отмена', callback_data: 'users' }]
+                        [{ text: '✏️ Ввести вручную', callback_data: `remove_quota_custom_${userId}` }],
+                        [{ text: '🔙 Отмена', callback_data: `show_user_${userId}` }]
                     ]
                 }
             }
