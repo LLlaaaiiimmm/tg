@@ -107,14 +107,14 @@ bot.start(async (ctx) => {
             const mainMenu = await createMainMenuKeyboard(userId);
             await ctx.reply(MESSAGES.WELCOME, { 
                 reply_markup: mainMenu,
-                ...replyKeyboard
+                ...replyKeyboard.reply_markup
             });
         } else {
             // Если уже отправили уведомление о реферале, просто отправляем меню
             const mainMenu = await createMainMenuKeyboard(userId);
             await ctx.reply('Выберите действие:', { 
                 reply_markup: mainMenu,
-                ...replyKeyboard
+                ...replyKeyboard.reply_markup
             });
         }
     } catch (err) {
