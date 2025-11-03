@@ -6,6 +6,7 @@ import { PaymentCryptoService } from './services/PaymentCrypto.service.js';
 import { PaymentFiatService } from './services/PaymentFiat.service.js';
 import { GenerationService } from './services/Generation.service.js';
 import { ReferralService } from './services/Referral.service.js';
+import { errorLogger } from './services/ErrorLogger.service.js';
 import { MESSAGES, KEYBOARDS, PACKAGES, SUPPORTED_CRYPTO, REFERRAL_ENABLED, REFERRAL_BONUS, EXPERT_CASHBACK_PERCENT } from './config.js';
 import { 
     createCatalogKeyboard, 
