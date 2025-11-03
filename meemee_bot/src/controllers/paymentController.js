@@ -166,7 +166,10 @@ export async function handleChainSelect(ctx, crypto, chain, packageKey = 'single
             return await ctx.answerCbQuery(payment.error, { show_alert: true });
         }
         
-        const { address, amount, destinationTag } = payment.output;
+        // Правильно извлекаем данные
+        const address = payment.output.address;
+        const amount = payment.input.amount; // Используем input.amount вместо output.amount
+        const destinationTag = payment.output.destinationTag;
         
         let message = `${pkg.emoji} ${pkg.title}\n\n`;
         message += `💎 Отправьте <code>${amount}</code> ${crypto}\n\n`;
@@ -181,9 +184,10 @@ export async function handleChainSelect(ctx, crypto, chain, packageKey = 'single
         
         const keyboard = createPaymentCryptoKeyboard(payment.orderId);
         
+        // ИСПРАВЛЕНО: убираем .inline_keyboard, так как функция уже возвращает правильный объект
         await ctx.editMessageText(message, {
             parse_mode: 'HTML',
-            reply_markup: keyboard.inline_keyboard
+            reply_markup: keyboard
         });
     } catch (err) {
         console.error('❌ Error in handleChainSelect:', err);
