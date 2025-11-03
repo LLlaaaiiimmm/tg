@@ -30,7 +30,7 @@ export class GenerationService {
     }
 
     // Создание генерации
-    async createGeneration({ userId, memeId, name, gender, customPrompt = null }) {
+    async createGeneration({ userId, memeId, name, gender, customPrompt = null, chatId = null }) {
         try {
             const generationId = this.generateId();
             let prompt;
@@ -72,6 +72,7 @@ export class GenerationService {
             const generation = {
                 generationId,
                 userId,
+                chatId: chatId || userId, // Сохраняем chatId для отправки уведомлений
                 memeId,
                 memeName,
                 name,
