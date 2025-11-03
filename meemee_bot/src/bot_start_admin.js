@@ -402,12 +402,22 @@ bot.action(/add_quota_confirm_(\d+)_(\d+)/, async (ctx) => {
             {
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: '👤 Посмотреть пользователя', callback_data: 'users' }],
+                        [{ text: '👤 Посмотреть пользователя', callback_data: `show_user_${userId}` }],
                         [{ text: '🔙 Главное меню', callback_data: 'main_menu' }]
                     ]
                 }
             }
         );
+        
+        // Уведомляем пользователя о добавлении генераций
+        try {
+            await mainBot.telegram.sendMessage(
+                userId,
+                `🎁 Вам начислено ${amount} бесплатных генераций!\n\n💎 Ваш новый баланс: ${newQuota} генераций`
+            );
+        } catch (notifyErr) {
+            console.log(`⚠️ Could not notify user ${userId}: ${notifyErr.message}`);
+        }
     } catch (err) {
         console.error('❌ Error in add_quota_confirm:', err);
         await ctx.answerCbQuery('Ошибка при добавлении');
