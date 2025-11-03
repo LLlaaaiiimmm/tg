@@ -508,10 +508,49 @@ bot.action(/crypto_(\w+)_(.+)/, (ctx) => {
 });
 
 // Обработка выбора сети
-bot.action(/chain_(\w+)_(.+)_(.+)/, (ctx) => {
-    const crypto = ctx.match[1];
-    const chain = ctx.match[2];
-    const packageKey = ctx.match[3];
+bot.action(/chain_(.+)/, (ctx) => {
+    // Разбираем callback_data вручную
+    const parts = ctx.callbackQuery.data.split('_');
+    // Формат: chain_CRYPTO_CHAIN_PACKAGE
+    // chain_TON_TON_single => ['chain', 'TON', 'TON', 'single']
+    // chain_USDT_USDT_(TRC20)_pack_10 => ['chain', 'USDT', 'USDT', '(TRC20)', 'pack', '10']
+    
+    if (parts.length < 4) {
+        console.error('❌ Invalid chain callback format:', ctx.callbackQuery.data);
+        return ctx.answerCbQuery('Ошибка формата данных');
+    }
+    
+    const crypto = parts[1]; // USDT, USDC, TON
+    
+    // Находим packageKey - это последний сегмент, который начинается с 'single', 'pack' или является 'pack_X'
+    let packageKey = '';
+    let chainParts = [];
+    
+    // Идем с конца и собираем packageKey
+    for (let i = parts.length - 1; i >= 2; i--) {
+        if (parts[i].match(/^(single|pack|10|100|300)$/)) {
+            if (parts[i] === 'pack' && parts[i + 1]) {
+                packageKey = `pack_${parts[i + 1]}`;
+                chainParts = parts.slice(2, i);
+                break;
+            } else if (parts[i] === 'single') {
+                packageKey = 'single';
+                chainParts = parts.slice(2, i);
+                break;
+            }
+        }
+    }
+    
+    // Если не нашли packageKey стандартным способом, значит это single и все остальное - chain
+    if (!packageKey) {
+        packageKey = parts[parts.length - 1];
+        chainParts = parts.slice(2, -1);
+    }
+    
+    const chain = chainParts.join('_');
+    
+    console.log('🔍 Chain selection:', { crypto, chain, packageKey, original: ctx.callbackQuery.data });
+    
     paymentController.handleChainSelect(ctx, crypto, chain, packageKey);
 });
 
