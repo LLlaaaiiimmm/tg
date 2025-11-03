@@ -214,6 +214,25 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// GET endpoints для проверки webhook'ов (для браузера)
+app.get('/webhook/lava', (req, res) => {
+    res.status(200).json({ 
+        status: 'ready', 
+        message: 'Lava webhook is ready to receive POST requests',
+        endpoint: '/webhook/lava',
+        method: 'POST'
+    });
+});
+
+app.get('/webhook/crypto', (req, res) => {
+    res.status(200).json({ 
+        status: 'ready', 
+        message: 'Crypto webhook is ready to receive POST requests',
+        endpoint: '/webhook/crypto',
+        method: 'POST'
+    });
+});
+
 // 404 handler
 app.use((req, res) => {
     res.status(404).json({ error: 'Not found' });
