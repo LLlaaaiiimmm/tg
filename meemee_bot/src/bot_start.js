@@ -111,15 +111,13 @@ bot.start(async (ctx) => {
         if (showWelcome) {
             const mainMenu = await createMainMenuKeyboard(userId);
             await ctx.reply(MESSAGES.WELCOME, { 
-                reply_markup: mainMenu,
-                ...replyKeyboard.reply_markup
+                reply_markup: mainMenu
             });
         } else {
             // Если уже отправили уведомление о реферале, просто отправляем меню
             const mainMenu = await createMainMenuKeyboard(userId);
             await ctx.reply('Выберите действие:', { 
-                reply_markup: mainMenu,
-                ...replyKeyboard.reply_markup
+                reply_markup: mainMenu
             });
         }
     } catch (err) {
@@ -134,6 +132,19 @@ bot.start(async (ctx) => {
         });
         
         await ctx.reply(`❌ Произошла ошибка номер ${errorData.id}. Обратитесь к менеджеру @aiviral_manager с номером ошибки.`);
+    }
+});
+
+// Обработка команды /create (Создать мем)
+bot.command('create', async (ctx) => {
+    try {
+        const keyboard = createCatalogKeyboard();
+        await ctx.reply(MESSAGES.MEMES_CATALOG, { 
+            reply_markup: keyboard
+        });
+    } catch (err) {
+        console.error('❌ Error in /create:', err);
+        await ctx.reply('Произошла ошибка. Попробуйте позже.');
     }
 });
 
