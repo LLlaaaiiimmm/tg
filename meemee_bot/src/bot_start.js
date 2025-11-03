@@ -503,8 +503,7 @@ async function waitForGeneration(ctx, generationId, quickCheckAttempts = 10) {
                                 [{ text: '🎬 Создать ещё', callback_data: 'catalog' }],
                                 [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
                             ]
-                        },
-                        ...replyKeyboard
+                        }
                     }
                 );
             } catch (err) {
@@ -517,8 +516,7 @@ async function waitForGeneration(ctx, generationId, quickCheckAttempts = 10) {
                                 [{ text: '🎬 Создать ещё', callback_data: 'catalog' }],
                                 [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
                             ]
-                        },
-                        ...replyKeyboard
+                        }
                     }
                 );
             }
@@ -546,8 +544,7 @@ async function waitForGeneration(ctx, generationId, quickCheckAttempts = 10) {
                             [{ text: '🔄 Попробовать снова', callback_data: 'catalog' }],
                             [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
                         ]
-                    },
-                    ...replyKeyboard
+                    }
                 }
             );
             return;
@@ -565,8 +562,7 @@ async function waitForGeneration(ctx, generationId, quickCheckAttempts = 10) {
                     [{ text: '🎬 Создать ещё', callback_data: 'catalog' }],
                     [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
                 ]
-            },
-            ...replyKeyboard
+            }
         }
     );
 }
