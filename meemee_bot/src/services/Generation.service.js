@@ -16,6 +16,7 @@ export class GenerationService {
         this.apiUrl = `https://api.kie.ai/api/v1/jobs`;
         this.modelName = 'sora-2-text-to-video';
         this.bot = bot; // Telegram bot instance для отправки уведомлений
+        this.userService = new UserService(); // Сервис для работы с квотами
     }
 
     // Загрузка промпта мема
