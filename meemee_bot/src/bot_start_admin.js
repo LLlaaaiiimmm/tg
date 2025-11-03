@@ -3,6 +3,7 @@ import { Telegraf, session, Input } from 'telegraf';
 import { UserService } from './services/User.service.js';
 import { OrderService } from './services/Order.service.js';
 import { GenerationService } from './services/Generation.service.js';
+import { errorLogger } from './services/ErrorLogger.service.js';
 import { ADMINS } from './config.js';
 import axios from 'axios';
 
