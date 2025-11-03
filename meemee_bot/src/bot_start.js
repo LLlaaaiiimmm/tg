@@ -504,6 +504,12 @@ bot.action('pay_stars', (ctx) => paymentController.handlePayStarsSoon(ctx));
 bot.action(/crypto_(\w+)_(.+)/, (ctx) => {
     const crypto = ctx.match[1];
     const packageKey = ctx.match[2];
+    console.log('🔍 DEBUG crypto callback:', {
+        fullData: ctx.callbackQuery.data,
+        match: ctx.match,
+        crypto,
+        packageKey
+    });
     paymentController.handleCryptoSelect(ctx, crypto, packageKey);
 });
 
