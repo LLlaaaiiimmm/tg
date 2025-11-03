@@ -34,9 +34,7 @@ const referralService = new ReferralService();
 
 // Reply клавиатура (постоянная внизу экрана)
 const replyKeyboard = Markup.keyboard([
-    ['/start', '🎬 Создать мем'],
-    ['👤 Профиль', '🎁 Рефералка'],
-    ['💳 Купить видео', 'ℹ️ О проекте']
+    ['/start', '🎬 Создать мем']
 ]).resize();
 
 // Session middleware
