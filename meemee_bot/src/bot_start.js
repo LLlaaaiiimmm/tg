@@ -216,7 +216,7 @@ bot.action(/meme_(.+)/, async (ctx) => {
             return await ctx.answerCbQuery(MESSAGES.MEME_SOON, { show_alert: true });
         }
         
-        // Проверка квоты
+        // Проверяем квоту
         const userId = ctx.from.id;
         const hasQuota = await userService.hasQuota(userId);
         
