@@ -185,7 +185,17 @@ export class GenerationService {
             }
 
             console.log('🎬 Starting video generation with Kie.ai Sora 2...');
-            console.log('Prompt:', prompt);
+            
+            // Определяем, является ли prompt объектом или строкой
+            let promptData;
+            if (typeof prompt === 'object') {
+                // Если это объект, преобразуем в JSON строку для API
+                promptData = JSON.stringify(prompt);
+                console.log('Prompt (JSON):', promptData);
+            } else {
+                promptData = prompt;
+                console.log('Prompt:', promptData);
+            }
 
             // Создание задачи через Kie.ai Sora 2 API
             const response = await axios.post(
@@ -193,7 +203,7 @@ export class GenerationService {
                 {
                     model: this.modelName,
                     input: {
-                        prompt: prompt,
+                        prompt: promptData,
                         aspect_ratio: 'landscape', // 16:9 формат
                         n_frames: '10', // 10 секунд
                         remove_watermark: true
