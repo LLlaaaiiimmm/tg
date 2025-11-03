@@ -275,6 +275,7 @@ bot.on('text', async (ctx) => {
             // Создаём генерацию с пользовательским промптом
             const generation = await generationService.createGeneration({
                 userId,
+                chatId: ctx.chat.id, // Добавляем chatId для уведомлений
                 memeId: 'custom',
                 name: 'Custom',
                 gender: 'male',
