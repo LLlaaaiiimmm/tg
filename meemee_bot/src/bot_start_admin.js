@@ -343,8 +343,14 @@ bot.action(/add_quota_(\d+)/, async (ctx) => {
             userId: userId
         };
         
+        const user = await userService.getUser(userId);
+        if (!user) {
+            await ctx.answerCbQuery('❌ Пользователь не найден');
+            return;
+        }
+        
         await ctx.editMessageText(
-            `➕ Добавление генераций\n\n👤 User ID: ${userId}\n\n📝 Отправьте количество генераций для добавления:`,
+            `➕ Добавление генераций\n\n👤 User ID: ${userId}\n📊 Текущий баланс: ${user.free_quota} бесплатных, ${user.paid_quota} платных\n\n📝 Выберите количество генераций для добавления:`,
             {
                 reply_markup: {
                     inline_keyboard: [
@@ -357,7 +363,8 @@ bot.action(/add_quota_(\d+)/, async (ctx) => {
                             { text: '+50', callback_data: `add_quota_confirm_${userId}_50` },
                             { text: '+100', callback_data: `add_quota_confirm_${userId}_100` }
                         ],
-                        [{ text: '🔙 Отмена', callback_data: 'users' }]
+                        [{ text: '✏️ Ввести вручную', callback_data: `add_quota_custom_${userId}` }],
+                        [{ text: '🔙 Отмена', callback_data: `show_user_${userId}` }]
                     ]
                 }
             }
