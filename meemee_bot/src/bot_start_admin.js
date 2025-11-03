@@ -551,6 +551,101 @@ bot.action('users', async (ctx) => {
     }
 });
 
+// Показ информации о пользователе
+bot.action(/show_user_(\d+)/, async (ctx) => {
+    try {
+        const userId = parseInt(ctx.match[1]);
+        const user = await userService.getUser(userId);
+        
+        if (!user) {
+            await ctx.answerCbQuery('❌ Пользователь не найден');
+            return;
+        }
+        
+        let message = `👤 Пользователь ${userId}:\n\n`;
+        message += `📝 Имя: ${user.firstName || ''} ${user.lastName || ''}\n`;
+        message += `🆔 Username: @${user.username || 'нет'}\n\n`;
+        message += `🎬 Генерации:\n`;
+        message += `├─ 🎁 Бесплатных: ${user.free_quota || 0}\n`;
+        message += `├─ 💎 Платных: ${user.paid_quota || 0}\n`;
+        message += `├─ 📊 Всего доступно: ${(user.free_quota || 0) + (user.paid_quota || 0)}\n`;
+        message += `├─ ✅ Успешно сделано: ${user.successful_generations || 0}\n`;
+        message += `└─ ❌ Ошибок: ${user.failed_generations || 0}\n\n`;
+        message += `💰 Потрачено: ${user.total_spent || 0}₽\n`;
+        message += `📅 Регистрация: ${new Date(user.createdAt).toLocaleDateString('ru-RU')}`;
+        
+        await ctx.editMessageText(message, {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: '➕ Добавить генерации', callback_data: `add_quota_${userId}` },
+                        { text: '➖ Убрать генерации', callback_data: `remove_quota_${userId}` }
+                    ],
+                    [{ text: '🔍 Найти другого', callback_data: 'users' }],
+                    [{ text: '🔙 Главное меню', callback_data: 'main_menu' }]
+                ]
+            }
+        });
+    } catch (err) {
+        console.error('❌ Error in show_user:', err);
+        await ctx.answerCbQuery('Ошибка');
+    }
+});
+
+// Ручной ввод количества для добавления
+bot.action(/add_quota_custom_(\d+)/, async (ctx) => {
+    try {
+        const userId = parseInt(ctx.match[1]);
+        
+        if (!ctx.session) ctx.session = {};
+        ctx.session.quotaAction = {
+            type: 'add_custom',
+            userId: userId
+        };
+        
+        await ctx.editMessageText(
+            `✏️ Ручной ввод\n\n👤 User ID: ${userId}\n\n📝 Отправьте количество генераций для добавления (число):`,
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '🔙 Отмена', callback_data: `show_user_${userId}` }]
+                    ]
+                }
+            }
+        );
+    } catch (err) {
+        console.error('❌ Error in add_quota_custom:', err);
+        await ctx.answerCbQuery('Ошибка');
+    }
+});
+
+// Ручной ввод количества для удаления
+bot.action(/remove_quota_custom_(\d+)/, async (ctx) => {
+    try {
+        const userId = parseInt(ctx.match[1]);
+        
+        if (!ctx.session) ctx.session = {};
+        ctx.session.quotaAction = {
+            type: 'remove_custom',
+            userId: userId
+        };
+        
+        await ctx.editMessageText(
+            `✏️ Ручной ввод\n\n👤 User ID: ${userId}\n\n📝 Отправьте количество генераций для удаления (число):`,
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '🔙 Отмена', callback_data: `show_user_${userId}` }]
+                    ]
+                }
+            }
+        );
+    } catch (err) {
+        console.error('❌ Error in remove_quota_custom:', err);
+        await ctx.answerCbQuery('Ошибка');
+    }
+});
+
 // Рассылка
 bot.action('broadcast', async (ctx) => {
     try {
