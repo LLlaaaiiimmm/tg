@@ -125,6 +125,27 @@ export class UserService {
         return true;
     }
 
+    // Уменьшение бесплатных генераций (админ)
+    async removeFreeQuota(userId, amount) {
+        const user = await this.getUser(userId);
+        if (!user) return false;
+
+        const newFreeQuota = Math.max(0, user.free_quota - amount);
+        await this.updateUser(userId, { free_quota: newFreeQuota });
+        console.log(`➖ User ${userId}: removed ${amount} free generations. Total: ${newFreeQuota}`);
+        return true;
+    }
+
+    // Установка точного количества бесплатных генераций (админ)
+    async setFreeQuota(userId, amount) {
+        const user = await this.getUser(userId);
+        if (!user) return false;
+
+        await this.updateUser(userId, { free_quota: amount });
+        console.log(`⚙️ User ${userId}: set free quota to ${amount}`);
+        return true;
+    }
+
     // Получение всех пользователей
     async getAllUsers() {
         const userIds = await redis.smembers('all_users');
