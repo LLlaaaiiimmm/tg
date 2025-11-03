@@ -197,6 +197,141 @@ bot.action('generations', async (ctx) => {
     }
 });
 
+// Ошибки системы
+bot.action('errors', async (ctx) => {
+    try {
+        const errorStats = await errorLogger.getErrorStats();
+        const recentErrors = await errorLogger.getAllErrors(10);
+
+        let message = '❌ ОШИБКИ СИСТЕМЫ\n\n';
+        message += `📊 Статистика:\n`;
+        message += `├─ Всего: ${errorStats.total}\n`;
+        message += `├─ За сегодня: ${errorStats.today}\n`;
+        message += `└─ За неделю: ${errorStats.week}\n\n`;
+
+        if (Object.keys(errorStats.byType).length > 0) {
+            message += `📋 По типам:\n`;
+            Object.entries(errorStats.byType).forEach(([type, count]) => {
+                message += `├─ ${type}: ${count}\n`;
+            });
+            message += `\n`;
+        }
+
+        if (recentErrors.length > 0) {
+            message += `🔴 Последние ошибки:\n\n`;
+            recentErrors.slice(0, 5).forEach((error, index) => {
+                const time = new Date(error.timestamp).toLocaleString('ru-RU');
+                const msg = error.message.substring(0, 50);
+                message += `${index + 1}. [${time}]\n`;
+                message += `   ${msg}${error.message.length > 50 ? '...' : ''}\n\n`;
+            });
+        } else {
+            message += `✅ Нет ошибок`;
+        }
+
+        await ctx.editMessageText(message, {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '📋 Все ошибки', callback_data: 'errors_all' }],
+                    [{ text: '🗑️ Очистить', callback_data: 'errors_clear' }],
+                    [{ text: '🔙 Назад', callback_data: 'main_menu' }]
+                ]
+            }
+        });
+    } catch (err) {
+        console.error('❌ Error in errors handler:', err);
+        await ctx.answerCbQuery('Ошибка получения данных');
+    }
+});
+
+// Все ошибки (детально)
+bot.action('errors_all', async (ctx) => {
+    try {
+        const errors = await errorLogger.getAllErrors(20);
+
+        if (errors.length === 0) {
+            await ctx.editMessageText('✅ Нет ошибок', {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '🔙 Назад', callback_data: 'errors' }]
+                    ]
+                }
+            });
+            return;
+        }
+
+        let message = `❌ ВСЕ ОШИБКИ (последние ${errors.length}):\n\n`;
+
+        errors.forEach((error, index) => {
+            const time = new Date(error.timestamp).toLocaleString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            message += `${index + 1}. [${time}] ${error.type}\n`;
+            message += `   ${error.message.substring(0, 80)}\n`;
+            if (error.source && error.source !== 'unknown') {
+                message += `   📍 ${error.source}\n`;
+            }
+            message += `\n`;
+        });
+
+        await ctx.editMessageText(message, {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '🔙 Назад', callback_data: 'errors' }]
+                ]
+            }
+        });
+    } catch (err) {
+        console.error('❌ Error in errors_all:', err);
+        await ctx.answerCbQuery('Ошибка получения данных');
+    }
+});
+
+// Очистка ошибок
+bot.action('errors_clear', async (ctx) => {
+    try {
+        await ctx.editMessageText(
+            '🗑️ Очистить все ошибки?\n\nЭто действие необратимо!',
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '✅ Да, очистить', callback_data: 'errors_clear_confirm' }],
+                        [{ text: '❌ Отмена', callback_data: 'errors' }]
+                    ]
+                }
+            }
+        );
+    } catch (err) {
+        console.error('❌ Error in errors_clear:', err);
+        await ctx.answerCbQuery('Ошибка');
+    }
+});
+
+// Подтверждение очистки ошибок
+bot.action('errors_clear_confirm', async (ctx) => {
+    try {
+        await errorLogger.clearAllErrors();
+        await ctx.answerCbQuery('✅ Все ошибки очищены');
+        
+        await ctx.editMessageText(
+            '✅ Все ошибки успешно очищены!',
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '🔙 Назад', callback_data: 'errors' }]
+                    ]
+                }
+            }
+        );
+    } catch (err) {
+        console.error('❌ Error in errors_clear_confirm:', err);
+        await ctx.answerCbQuery('Ошибка при очистке');
+    }
+});
+
 // Пользователи
 bot.action('users', async (ctx) => {
     try {
