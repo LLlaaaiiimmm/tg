@@ -102,13 +102,29 @@ app.post('/webhook/crypto', async (req, res) => {
         // Обрабатываем успешный платеж
         if (status === 'success' || status === 'paid') {
             console.log('✅ Processing successful crypto payment:', billingID);
+            console.log(`📊 Order details: userId=${order.userId}, package=${order.package}, amount=${order.amount}`);
 
             await orderService.markAsPaid(billingID);
 
             const pkg = PACKAGES[order.package];
-            await userService.addPaidQuota(clientId, pkg.generations);
+            if (!pkg) {
+                console.error(`❌ Package not found: ${order.package}`);
+                return res.status(400).json({ error: 'Package not found' });
+            }
 
-            await referralService.processExpertCashback(clientId, order.amount);
+            // ИСПРАВЛЕНО: используем order.userId вместо clientId из webhook
+            console.log(`💳 Adding ${pkg.generations} videos to user ${order.userId}`);
+            const addResult = await userService.addPaidQuota(order.userId, pkg.generations);
+            
+            if (!addResult) {
+                console.error(`❌ Failed to add quota to user ${order.userId}`);
+                return res.status(500).json({ error: 'Failed to add quota' });
+            }
+
+            console.log(`✅ Successfully added ${pkg.generations} videos to user ${order.userId}`);
+
+            // Обрабатываем кешбэк для реферала
+            await referralService.processExpertCashback(order.userId, order.amount);
 
             res.status(200).json({ success: true });
         } else {
