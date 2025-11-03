@@ -332,6 +332,164 @@ bot.action('errors_clear_confirm', async (ctx) => {
     }
 });
 
+// Добавление генераций пользователю
+bot.action(/add_quota_(\d+)/, async (ctx) => {
+    try {
+        const userId = parseInt(ctx.match[1]);
+        
+        if (!ctx.session) ctx.session = {};
+        ctx.session.quotaAction = {
+            type: 'add',
+            userId: userId
+        };
+        
+        await ctx.editMessageText(
+            `➕ Добавление генераций\n\n👤 User ID: ${userId}\n\n📝 Отправьте количество генераций для добавления:`,
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: '+1', callback_data: `add_quota_confirm_${userId}_1` },
+                            { text: '+5', callback_data: `add_quota_confirm_${userId}_5` },
+                            { text: '+10', callback_data: `add_quota_confirm_${userId}_10` }
+                        ],
+                        [
+                            { text: '+50', callback_data: `add_quota_confirm_${userId}_50` },
+                            { text: '+100', callback_data: `add_quota_confirm_${userId}_100` }
+                        ],
+                        [{ text: '🔙 Отмена', callback_data: 'users' }]
+                    ]
+                }
+            }
+        );
+    } catch (err) {
+        console.error('❌ Error in add_quota:', err);
+        await ctx.answerCbQuery('Ошибка');
+    }
+});
+
+// Подтверждение добавления генераций
+bot.action(/add_quota_confirm_(\d+)_(\d+)/, async (ctx) => {
+    try {
+        const userId = parseInt(ctx.match[1]);
+        const amount = parseInt(ctx.match[2]);
+        
+        const user = await userService.getUser(userId);
+        if (!user) {
+            await ctx.answerCbQuery('❌ Пользователь не найден');
+            return;
+        }
+        
+        const oldQuota = user.free_quota;
+        await userService.addFreeQuota(userId, amount);
+        const newQuota = oldQuota + amount;
+        
+        await ctx.answerCbQuery(`✅ Добавлено ${amount} генераций`);
+        
+        await ctx.editMessageText(
+            `✅ Генерации добавлены!\n\n` +
+            `👤 User ID: ${userId}\n` +
+            `📊 Было: ${oldQuota}\n` +
+            `➕ Добавлено: ${amount}\n` +
+            `📊 Стало: ${newQuota}`,
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '👤 Посмотреть пользователя', callback_data: 'users' }],
+                        [{ text: '🔙 Главное меню', callback_data: 'main_menu' }]
+                    ]
+                }
+            }
+        );
+    } catch (err) {
+        console.error('❌ Error in add_quota_confirm:', err);
+        await ctx.answerCbQuery('Ошибка при добавлении');
+    }
+});
+
+// Удаление генераций пользователю
+bot.action(/remove_quota_(\d+)/, async (ctx) => {
+    try {
+        const userId = parseInt(ctx.match[1]);
+        const user = await userService.getUser(userId);
+        
+        if (!user) {
+            await ctx.answerCbQuery('❌ Пользователь не найден');
+            return;
+        }
+        
+        if (!ctx.session) ctx.session = {};
+        ctx.session.quotaAction = {
+            type: 'remove',
+            userId: userId
+        };
+        
+        await ctx.editMessageText(
+            `➖ Удаление генераций\n\n` +
+            `👤 User ID: ${userId}\n` +
+            `📊 Текущий баланс: ${user.free_quota}\n\n` +
+            `📝 Отправьте количество генераций для удаления:`,
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: '-1', callback_data: `remove_quota_confirm_${userId}_1` },
+                            { text: '-5', callback_data: `remove_quota_confirm_${userId}_5` },
+                            { text: '-10', callback_data: `remove_quota_confirm_${userId}_10` }
+                        ],
+                        [
+                            { text: 'Обнулить', callback_data: `remove_quota_confirm_${userId}_${user.free_quota}` }
+                        ],
+                        [{ text: '🔙 Отмена', callback_data: 'users' }]
+                    ]
+                }
+            }
+        );
+    } catch (err) {
+        console.error('❌ Error in remove_quota:', err);
+        await ctx.answerCbQuery('Ошибка');
+    }
+});
+
+// Подтверждение удаления генераций
+bot.action(/remove_quota_confirm_(\d+)_(\d+)/, async (ctx) => {
+    try {
+        const userId = parseInt(ctx.match[1]);
+        const amount = parseInt(ctx.match[2]);
+        
+        const user = await userService.getUser(userId);
+        if (!user) {
+            await ctx.answerCbQuery('❌ Пользователь не найден');
+            return;
+        }
+        
+        const oldQuota = user.free_quota;
+        await userService.removeFreeQuota(userId, amount);
+        const newQuota = Math.max(0, oldQuota - amount);
+        
+        await ctx.answerCbQuery(`✅ Удалено ${amount} генераций`);
+        
+        await ctx.editMessageText(
+            `✅ Генерации удалены!\n\n` +
+            `👤 User ID: ${userId}\n` +
+            `📊 Было: ${oldQuota}\n` +
+            `➖ Удалено: ${amount}\n` +
+            `📊 Стало: ${newQuota}`,
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '👤 Посмотреть пользователя', callback_data: 'users' }],
+                        [{ text: '🔙 Главное меню', callback_data: 'main_menu' }]
+                    ]
+                }
+            }
+        );
+    } catch (err) {
+        console.error('❌ Error in remove_quota_confirm:', err);
+        await ctx.answerCbQuery('Ошибка при удалении');
+    }
+});
+
 // Пользователи
 bot.action('users', async (ctx) => {
     try {
