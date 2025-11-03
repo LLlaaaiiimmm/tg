@@ -407,6 +407,7 @@ bot.action('confirm_gen', async (ctx) => {
         // Создаём генерацию
         const generation = await generationService.createGeneration({
             userId,
+            chatId: ctx.chat.id, // Добавляем chatId для уведомлений
             memeId,
             name,
             gender
