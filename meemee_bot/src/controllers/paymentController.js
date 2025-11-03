@@ -126,8 +126,13 @@ export async function handlePayCrypto(ctx, packageKey = 'single') {
 // Обработчик выбора криптовалюты
 export async function handleCryptoSelect(ctx, crypto, packageKey = 'single') {
     try {
+        console.log('💎 Crypto selected:', { crypto, packageKey });
+        
         const chains = SUPPORTED_CRYPTO[crypto];
+        console.log('🔗 Available chains:', chains);
+        
         if (!chains || chains.length === 0) {
+            console.error('❌ No chains found for crypto:', crypto);
             return await ctx.answerCbQuery('Эта криптовалюта временно недоступна');
         }
         
@@ -135,6 +140,11 @@ export async function handleCryptoSelect(ctx, crypto, packageKey = 'single') {
         ctx.session.selectedPackage = packageKey;
         
         const pkg = PACKAGES[packageKey];
+        if (!pkg) {
+            console.error('❌ Package not found:', packageKey);
+            return await ctx.answerCbQuery('Пакет не найден');
+        }
+        
         const keyboard = createChainKeyboard(crypto, chains, packageKey);
         
         await ctx.editMessageText(
