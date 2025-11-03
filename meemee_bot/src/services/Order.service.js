@@ -52,6 +52,11 @@ export class OrderService {
         return orders;
     }
 
+    // Алиас для совместимости
+    async getOrdersByUserId(userId) {
+        return await this.getUserOrders(userId);
+    }
+
     // Получение всех заказов
     async getAllOrders() {
         const orderIds = await redis.lrange('all_orders', 0, -1);
