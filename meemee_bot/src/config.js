@@ -11,35 +11,35 @@ export const PACKAGES = {
         stars: 100,
         offerIdLava: 'YOUR_LAVA_OFFER_ID_SINGLE'
     },
+    pack_5: {
+        title: '5 видео',
+        emoji: '📦',
+        generations: 5,
+        usdt: 29,
+        rub: 2900,
+        stars: 500,
+        discount: '0%',
+        offerIdLava: 'YOUR_LAVA_OFFER_ID_PACK5'
+    },
     pack_10: {
         title: '10 видео',
-        emoji: '📦',
+        emoji: '🎁',
         generations: 10,
-        usdt: 50,
-        rub: 5000,
-        stars: 900,
-        discount: '15%',
+        usdt: 58,
+        rub: 5800,
+        stars: 1000,
+        discount: '0%',
         offerIdLava: 'YOUR_LAVA_OFFER_ID_PACK10'
     },
-    pack_100: {
-        title: '100 видео',
-        emoji: '🎁',
-        generations: 100,
-        usdt: 400,
-        rub: 40000,
-        stars: 7500,
-        discount: '30%',
-        offerIdLava: 'YOUR_LAVA_OFFER_ID_PACK100'
-    },
-    pack_300: {
-        title: '300 видео',
+    pack_50: {
+        title: '50 видео',
         emoji: '💎',
-        generations: 300,
-        usdt: 1000,
-        rub: 100000,
-        stars: 20000,
-        discount: '40%',
-        offerIdLava: 'YOUR_LAVA_OFFER_ID_PACK300'
+        generations: 50,
+        usdt: 290,
+        rub: 29000,
+        stars: 5000,
+        discount: '0%',
+        offerIdLava: 'YOUR_LAVA_OFFER_ID_PACK50'
     }
 };
 
@@ -116,13 +116,25 @@ export const MESSAGES = {
         let message = `👤 Личный кабинет\n\n`;
         message += `🆔 ID: ${user.userId}\n`;
         message += `📝 Имя: ${user.firstName || 'не указано'}\n\n`;
+        
+        // Баланс генераций
+        const usedFree = user.used_free_quota || 0;
+        const usedPaid = user.used_paid_quota || 0;
+        const availableFree = user.free_quota || 0;
+        const availablePaid = user.paid_quota || 0;
+        
         message += `🎬 Баланс генераций:\n`;
-        message += `├─ 🎁 Бесплатных: ${user.free_quota || 0}\n`;
-        message += `├─ 💎 Платных: ${user.paid_quota || 0}\n`;
-        message += `└─ 📊 Всего доступно: ${(user.free_quota || 0) + (user.paid_quota || 0)}\n\n`;
+        message += `├─ 🎁 Доступно бесплатных: ${availableFree}\n`;
+        message += `├─ ❤️ Использовано бесплатных: ${usedFree}\n`;
+        message += `├─ 👍 Доступно платных: ${availablePaid}\n`;
+        message += `└─ 💎 Использовано платных: ${usedPaid}\n\n`;
+        
+        // Статистика
+        const remainingBalance = user.remaining_balance || 0;
         message += `📈 Статистика:\n`;
         message += `├─ ✅ Успешно: ${user.successful_generations || 0}\n`;
         message += `├─ ❌ Ошибок: ${user.failed_generations || 0}\n`;
+        message += `├─ 🏆 Остаток: ${remainingBalance}₽\n`;
         message += `└─ 💰 Потрачено: ${user.total_spent || 0}₽\n\n`;
         
         // Добавляем реферальную статистику
@@ -142,15 +154,7 @@ export const MESSAGES = {
             }
         }
         
-        if (generations && generations.length > 0) {
-            message += `🎬 Последние генерации:\n`;
-            const recent = generations.slice(0, 5);
-            recent.forEach((gen, idx) => {
-                const statusEmoji = gen.status === 'done' ? '✅' : gen.status === 'failed' ? '❌' : '⏳';
-                const date = new Date(gen.createdAt).toLocaleDateString('ru-RU');
-                message += `${idx + 1}. ${statusEmoji} ${gen.memeName} (${date})\n`;
-            });
-        }
+        // Убрали секцию "Последние генерации"
         
         return message;
     },
