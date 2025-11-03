@@ -479,6 +479,14 @@ async function waitForGeneration(ctx, generationId, quickCheckAttempts = 10) {
         const generation = await generationService.getGeneration(generationId);
         
         if (generation.status === 'done' && generation.videoUrl) {
+            // Увеличиваем счетчик успешных генераций
+            const user = await userService.getUser(ctx.from.id);
+            if (user) {
+                await userService.updateUser(ctx.from.id, {
+                    successful_generations: (user.successful_generations || 0) + 1
+                });
+            }
+            
             try {
                 await ctx.replyWithVideo(
                     { url: generation.videoUrl },
@@ -489,7 +497,8 @@ async function waitForGeneration(ctx, generationId, quickCheckAttempts = 10) {
                                 [{ text: '🎬 Создать ещё', callback_data: 'catalog' }],
                                 [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
                             ]
-                        }
+                        },
+                        ...replyKeyboard
                     }
                 );
             } catch (err) {
@@ -502,7 +511,8 @@ async function waitForGeneration(ctx, generationId, quickCheckAttempts = 10) {
                                 [{ text: '🎬 Создать ещё', callback_data: 'catalog' }],
                                 [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
                             ]
-                        }
+                        },
+                        ...replyKeyboard
                     }
                 );
             }
@@ -510,9 +520,19 @@ async function waitForGeneration(ctx, generationId, quickCheckAttempts = 10) {
         } else if (generation.status === 'failed') {
             // Возвращаем квоту
             await userService.refundQuota(ctx.from.id);
+            
+            // Увеличиваем счетчик ошибок
+            const user = await userService.getUser(ctx.from.id);
+            if (user) {
+                await userService.updateUser(ctx.from.id, {
+                    failed_generations: (user.failed_generations || 0) + 1
+                });
+            }
+            
+            const errorId = generation.errorId || 'UNKNOWN';
             await ctx.reply(
                 '❌ К сожалению, не удалось создать видео.\n\n' +
-                `Ошибка: ${generation.error}\n\n` +
+                `Ошибка номер ${errorId}. Обратитесь к менеджеру @aiviral_manager с номером ошибки.\n\n` +
                 '💰 Ваша генерация возвращена на баланс.',
                 {
                     reply_markup: {
@@ -520,7 +540,8 @@ async function waitForGeneration(ctx, generationId, quickCheckAttempts = 10) {
                             [{ text: '🔄 Попробовать снова', callback_data: 'catalog' }],
                             [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
                         ]
-                    }
+                    },
+                    ...replyKeyboard
                 }
             );
             return;
@@ -538,7 +559,8 @@ async function waitForGeneration(ctx, generationId, quickCheckAttempts = 10) {
                     [{ text: '🎬 Создать ещё', callback_data: 'catalog' }],
                     [{ text: '🏠 Главное меню', callback_data: 'main_menu' }]
                 ]
-            }
+            },
+            ...replyKeyboard
         }
     );
 }
