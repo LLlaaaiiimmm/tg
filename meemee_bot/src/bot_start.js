@@ -32,10 +32,15 @@ const paymentFiatService = new PaymentFiatService();
 const generationService = new GenerationService(bot); // Передаем bot instance
 const referralService = new ReferralService();
 
-// Reply клавиатура (постоянная внизу экрана)
-const replyKeyboard = Markup.keyboard([
-    ['/start', '🎬 Создать мем']
-]).resize();
+// Устанавливаем команды меню (кнопка слева от поля ввода)
+bot.telegram.setMyCommands([
+    { command: 'start', description: 'Главное меню' },
+    { command: 'create', description: 'Создать мем' }
+]).then(() => {
+    console.log('✅ Bot menu commands set');
+}).catch(err => {
+    console.error('❌ Error setting menu commands:', err);
+});
 
 // Session middleware
 bot.use(session());
