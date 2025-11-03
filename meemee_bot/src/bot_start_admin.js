@@ -47,6 +47,7 @@ const ADMIN_MENU = {
             [{ text: '💳 Платежи', callback_data: 'payments' }],
             [{ text: '🎬 Генерации', callback_data: 'generations' }],
             [{ text: '👥 Пользователи', callback_data: 'users' }],
+            [{ text: '❌ ОШИБКИ', callback_data: 'errors' }],
             [{ text: '📥 Экспорт отчётов', callback_data: 'export_reports' }],
             [{ text: '📢 Рассылка', callback_data: 'broadcast' }]
         ]
