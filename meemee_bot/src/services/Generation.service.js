@@ -522,10 +522,12 @@ export class GenerationService {
                     console.log(`💰 Refunded quota for user ${generation.userId}`);
                 }
                 
+                // Формируем упрощённое сообщение об ошибке
+                const errorId = data.errorId || 'UNKNOWN';
                 await this.bot.telegram.sendMessage(
                     chatId,
                     `❌ К сожалению, не удалось создать видео.\n\n` +
-                    `Ошибка: ${data.error}\n\n` +
+                    `Ошибка номер ${errorId}. Обратитесь к менеджеру @aiviral_manager с номером ошибки.\n\n` +
                     `💰 Ваша генерация возвращена на баланс.`,
                     {
                         reply_markup: {
