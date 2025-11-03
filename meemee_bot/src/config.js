@@ -9,7 +9,7 @@ export const PACKAGES = {
         usdt: 5.8,
         rub: 580,
         stars: 100,
-        offerIdLava: 'YOUR_LAVA_OFFER_ID_SINGLE'
+        offerIdLava: '0cd4aad3-5991-4109-826f-2eded4c68f71'
     },
     pack_5: {
         title: '5 видео',
@@ -19,7 +19,7 @@ export const PACKAGES = {
         rub: 2900,
         stars: 500,
         discount: '0%',
-        offerIdLava: 'YOUR_LAVA_OFFER_ID_PACK5'
+        offerIdLava: '0cd4aad3-5991-4109-826f-2eded4c68f71'
     },
     pack_10: {
         title: '10 видео',
@@ -29,7 +29,7 @@ export const PACKAGES = {
         rub: 5800,
         stars: 1000,
         discount: '0%',
-        offerIdLava: 'YOUR_LAVA_OFFER_ID_PACK10'
+        offerIdLava: '0cd4aad3-5991-4109-826f-2eded4c68f71'
     },
     pack_50: {
         title: '50 видео',
@@ -39,7 +39,7 @@ export const PACKAGES = {
         rub: 29000,
         stars: 5000,
         discount: '0%',
-        offerIdLava: 'YOUR_LAVA_OFFER_ID_PACK50'
+        offerIdLava: '0cd4aad3-5991-4109-826f-2eded4c68f71'
     }
 };
 
