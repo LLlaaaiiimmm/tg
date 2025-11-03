@@ -154,7 +154,16 @@ export const MESSAGES = {
             }
         }
         
-        // Убрали секцию "Последние генерации"
+        // ЗАКОММЕНТИРОВАНО: Последние генерации
+        // if (generations && generations.length > 0) {
+        //     message += `🎬 Последние генерации:\n`;
+        //     const recent = generations.slice(0, 5);
+        //     recent.forEach((gen, idx) => {
+        //         const statusEmoji = gen.status === 'done' ? '✅' : gen.status === 'failed' ? '❌' : '⏳';
+        //         const date = new Date(gen.createdAt).toLocaleDateString('ru-RU');
+        //         message += `${idx + 1}. ${statusEmoji} ${gen.memeName} (${date})\n`;
+        //     });
+        // }
         
         return message;
     },
