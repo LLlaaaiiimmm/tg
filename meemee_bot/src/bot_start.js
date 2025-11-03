@@ -145,44 +145,44 @@ bot.action('main_menu', async (ctx) => {
     }
 });
 
-// Обработка кнопки "Использовать бесплатную генерацию"
-bot.action('use_free_generation', async (ctx) => {
-    try {
-        const userId = ctx.from.id;
-        const user = await userService.getUser(userId);
-        
-        // Проверяем, есть ли бесплатные генерации
-        if (!user || user.free_quota <= 0) {
-            await ctx.answerCbQuery('❌ У вас нет бесплатных генераций', { show_alert: true });
-            return;
-        }
-        
-        // Запрашиваем промпт для генерации
-        ctx.session = ctx.session || {};
-        ctx.session.waitingFor = 'free_prompt';
-        
-        await ctx.editMessageText(
-            `🎁 *Бесплатная генерация видео*\n\n` +
-            `📝 Опишите видео, которое хотите создать.\n\n` +
-            `*Примеры:*\n` +
-            `• Создай короткое видео с закатом на море\n` +
-            `• Мальчик танцует на улице\n` +
-            `• Кот играет с мячиком в саду\n\n` +
-            `Введите ваш промпт:`,
-            { 
-                parse_mode: 'Markdown',
-                reply_markup: {
-                    inline_keyboard: [
-                        [{ text: '🔙 Назад', callback_data: 'main_menu' }]
-                    ]
-                }
-            }
-        );
-    } catch (err) {
-        console.error('❌ Error in use_free_generation:', err);
-        await ctx.answerCbQuery('Произошла ошибка');
-    }
-});
+// ЗАКОММЕНТИРОВАНО: Обработка кнопки "Использовать бесплатную генерацию"
+// bot.action('use_free_generation', async (ctx) => {
+//     try {
+//         const userId = ctx.from.id;
+//         const user = await userService.getUser(userId);
+//         
+//         // Проверяем, есть ли бесплатные генерации
+//         if (!user || user.free_quota <= 0) {
+//             await ctx.answerCbQuery('❌ У вас нет бесплатных генераций', { show_alert: true });
+//             return;
+//         }
+//         
+//         // Запрашиваем промпт для генерации
+//         ctx.session = ctx.session || {};
+//         ctx.session.waitingFor = 'free_prompt';
+//         
+//         await ctx.editMessageText(
+//             `🎁 *Бесплатная генерация видео*\n\n` +
+//             `📝 Опишите видео, которое хотите создать.\n\n` +
+//             `*Примеры:*\n` +
+//             `• Создай короткое видео с закатом на море\n` +
+//             `• Мальчик танцует на улице\n` +
+//             `• Кот играет с мячиком в саду\n\n` +
+//             `Введите ваш промпт:`,
+//             { 
+//                 parse_mode: 'Markdown',
+//                 reply_markup: {
+//                     inline_keyboard: [
+//                         [{ text: '🔙 Назад', callback_data: 'main_menu' }]
+//                     ]
+//                 }
+//             }
+//         );
+//     } catch (err) {
+//         console.error('❌ Error in use_free_generation:', err);
+//         await ctx.answerCbQuery('Произошла ошибка');
+//     }
+// });
 
 // Обработка каталога мемов
 bot.action(/catalog.*/, async (ctx) => {
