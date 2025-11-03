@@ -260,12 +260,11 @@ bot.on('text', async (ctx) => {
     try {
         ctx.session = ctx.session || {};
         
-        // Обработка команды "Создать мем" из reply клавиатуры
-        if (ctx.message.text === 'Создать мем') {
+        // Обработка команды "Создать мем" из reply клавиатуры (с эмодзи)
+        if (ctx.message.text === '🎬 Создать мем') {
             const keyboard = createCatalogKeyboard();
             await ctx.reply(MESSAGES.MEMES_CATALOG, { 
-                reply_markup: keyboard,
-                ...replyKeyboard
+                reply_markup: keyboard
             });
             return;
         }
