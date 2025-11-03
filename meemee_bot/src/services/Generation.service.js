@@ -204,8 +204,8 @@ export class GenerationService {
                     model: this.modelName,
                     input: {
                         prompt: promptData,
-                        aspect_ratio: 'landscape', // 16:9 формат
-                        n_frames: '10', // 10 секунд
+                        aspect_ratio: 'portrait', // 9:16 формат (1080x1920)
+                        n_frames: '8', // 8 секунд
                         remove_watermark: true
                     }
                 },
