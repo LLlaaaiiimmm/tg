@@ -501,7 +501,7 @@ bot.action(/pay_crypto_(.+)/, (ctx) => {
 bot.action('pay_stars', (ctx) => paymentController.handlePayStarsSoon(ctx));
 
 // Обработка выбора криптовалюты
-bot.action(/crypto_(\w+)_(.+)/, (ctx) => {
+bot.action(/crypto_([A-Z]+)_(.+)/, (ctx) => {
     const crypto = ctx.match[1];
     const packageKey = ctx.match[2];
     console.log('🔍 DEBUG crypto callback:', {
