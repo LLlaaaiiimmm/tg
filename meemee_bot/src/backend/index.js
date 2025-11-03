@@ -84,7 +84,10 @@ app.post('/webhook/lava', async (req, res) => {
 // Webhook для 0xprocessing (крипто платежи)
 app.post('/webhook/crypto', async (req, res) => {
     try {
-        console.log('📥 Crypto webhook received:', JSON.stringify(req.body));
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('📥 Crypto webhook received at:', new Date().toISOString());
+        console.log('📦 Full webhook data:', JSON.stringify(req.body, null, 2));
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
         const { billingID, status, clientId } = req.body;
 
