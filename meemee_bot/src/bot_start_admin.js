@@ -568,7 +568,17 @@ bot.on('text', async (ctx) => {
             message += `💰 Потрачено: ${user.total_spent || 0}₽\n`;
             message += `📅 Регистрация: ${new Date(user.createdAt).toLocaleDateString('ru-RU')}`;
             
-            await ctx.reply(message, ADMIN_MENU);
+            await ctx.reply(message, {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: '➕ Добавить генерации', callback_data: `add_quota_${userId}` },
+                            { text: '➖ Убрать генерации', callback_data: `remove_quota_${userId}` }
+                        ],
+                        [{ text: '🔙 Назад', callback_data: 'main_menu' }]
+                    ]
+                }
+            });
             delete ctx.session.waitingForUserId;
             return;
         }
