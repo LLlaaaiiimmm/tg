@@ -62,10 +62,20 @@ export class PaymentCryptoService {
             data.payCurrency = payCurrency;
             data.createdAt = new Date().toISOString();
 
-            // Проверка минимальной суммы
-            const coinInfoResponse = await axios.get(`${this.baseUrl}/Api/CoinInfo/${payCurrency}`);
-            if (new BigNumber(data.amount).isLessThan(coinInfoResponse.data.min)) {
-                return { error: 'Сумма оплаты слишком мала для этой сети. Попробуйте другую.' };
+            // Проверка минимальной суммы (с обработкой ошибок)
+            try {
+                const coinInfoResponse = await axios.get(`${this.baseUrl}/Api/CoinInfo/${payCurrency}`);
+                console.log(`💡 Min amount for ${payCurrency}: ${coinInfoResponse.data.min}, Payment amount: ${data.amount}`);
+                
+                if (coinInfoResponse.data && coinInfoResponse.data.min) {
+                    if (new BigNumber(data.amount).isLessThan(coinInfoResponse.data.min)) {
+                        console.log(`❌ Amount ${data.amount} is less than minimum ${coinInfoResponse.data.min} for ${payCurrency}`);
+                        return { error: 'Сумма оплаты слишком мала для этой сети. Попробуйте другую.' };
+                    }
+                }
+            } catch (minCheckError) {
+                // Если не удалось проверить минимум - пропускаем проверку и продолжаем
+                console.warn(`⚠️ Could not check minimum amount for ${payCurrency}, skipping check:`, minCheckError.message);
             }
 
             const orderData = {
