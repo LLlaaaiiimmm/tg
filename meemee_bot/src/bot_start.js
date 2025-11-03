@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { Telegraf, Scenes, session } from 'telegraf';
+import { Telegraf, Scenes, session, Markup } from 'telegraf';
 import { UserService } from './services/User.service.js';
 import { OrderService } from './services/Order.service.js';
 import { PaymentCryptoService } from './services/PaymentCrypto.service.js';
@@ -31,6 +31,11 @@ const paymentCryptoService = new PaymentCryptoService();
 const paymentFiatService = new PaymentFiatService();
 const generationService = new GenerationService(bot); // Передаем bot instance
 const referralService = new ReferralService();
+
+// Reply клавиатура (постоянная внизу экрана)
+const replyKeyboard = Markup.keyboard([
+    ['/start', 'Создать мем']
+]).resize();
 
 // Session middleware
 bot.use(session());
