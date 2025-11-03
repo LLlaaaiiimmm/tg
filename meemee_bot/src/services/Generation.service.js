@@ -169,6 +169,18 @@ export class GenerationService {
                     status: 'done',
                     videoUrl: videoUrl
                 });
+                
+                // Увеличиваем счетчик успешных генераций
+                const generation = await this.getGeneration(generationId);
+                if (generation && generation.userId) {
+                    const user = await this.userService.getUser(generation.userId);
+                    if (user) {
+                        await this.userService.updateUser(generation.userId, {
+                            successful_generations: (user.successful_generations || 0) + 1
+                        });
+                    }
+                }
+                
                 console.log(`✅ Generation ${generationId} completed successfully`);
                 
                 // Отправляем уведомление пользователю
