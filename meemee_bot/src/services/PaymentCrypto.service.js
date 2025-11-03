@@ -7,14 +7,31 @@ export class PaymentCryptoService {
     constructor() {
         this.baseUrl = 'https://app.0xprocessing.com';
         this.api = process.env.PAYMENT_API;
-        this.merchant = process.env.MERCHANT_ID || '0xMR8252827';
+        this.merchant = '0xMR8252827';
     }
 
     // Создание крипто-платежа
     async createPayment({ userId, amount, payCurrency, package: pkg }) {
         try {
             const orderService = new OrderService();
+            
+            // Проверка на существующий заказ
+            const userOrders = await orderService.getOrdersByUserId(userId);
+            const tenMinutesFromNow = new Date(Date.now() + 10 * 60 * 1000);
+
+            const existingOrder = userOrders.find(order =>
+                order?.input?.amount === amount &&
+                new Date(order?.output?.expiredAt) < tenMinutesFromNow &&
+                order?.input?.payCurrency === payCurrency
+            );
+
+            if (existingOrder) {
+                console.log(`♻️ Reusing existing order: ${existingOrder.orderId}`);
+                return existingOrder;
+            }
+
             const orderId = orderService.generateOrderId('CRYPTO');
+            console.log(`📝 Order ${orderId} created for user ${userId}`);
 
             const data = {
                 merchantID: this.merchant,
@@ -42,6 +59,7 @@ export class PaymentCryptoService {
                     : response.data.rate)
                 .toFixed(5);
             data.package = pkg;
+            data.payCurrency = payCurrency;
             data.createdAt = new Date().toISOString();
 
             // Проверка минимальной суммы
