@@ -167,6 +167,13 @@ export class GenerationService {
                     videoUrl: videoUrl
                 });
                 console.log(`✅ Generation ${generationId} completed successfully`);
+                
+                // Отправляем уведомление пользователю
+                await this.notifyUser(generation.chatId || generation.userId, {
+                    status: 'success',
+                    videoUrl: videoUrl,
+                    generationId: generationId
+                });
             } else {
                 throw new Error('Failed to generate video');
             }
@@ -176,6 +183,17 @@ export class GenerationService {
                 status: 'failed',
                 error: err.message
             });
+            
+            // Получаем генерацию для доступа к chatId
+            const generation = await this.getGeneration(generationId);
+            if (generation) {
+                // Отправляем уведомление об ошибке
+                await this.notifyUser(generation.chatId || generation.userId, {
+                    status: 'failed',
+                    error: err.message,
+                    generationId: generationId
+                });
+            }
         }
     }
 
