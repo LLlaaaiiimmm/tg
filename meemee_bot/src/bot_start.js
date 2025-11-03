@@ -105,15 +105,30 @@ bot.start(async (ctx) => {
         // Отправка приветственного сообщения
         if (showWelcome) {
             const mainMenu = await createMainMenuKeyboard(userId);
-            await ctx.reply(MESSAGES.WELCOME, { reply_markup: mainMenu });
+            await ctx.reply(MESSAGES.WELCOME, { 
+                reply_markup: mainMenu,
+                ...replyKeyboard
+            });
         } else {
             // Если уже отправили уведомление о реферале, просто отправляем меню
             const mainMenu = await createMainMenuKeyboard(userId);
-            await ctx.reply('Выберите действие:', { reply_markup: mainMenu });
+            await ctx.reply('Выберите действие:', { 
+                reply_markup: mainMenu,
+                ...replyKeyboard
+            });
         }
     } catch (err) {
         console.error('❌ Error in /start:', err);
-        await ctx.reply('Произошла ошибка. Попробуйте позже.');
+        
+        // Логируем ошибку
+        const errorData = await errorLogger.logError({
+            message: err.message,
+            stack: err.stack,
+            name: err.name || 'StartCommandError',
+            source: 'Bot Start Command'
+        });
+        
+        await ctx.reply(`❌ Произошла ошибка номер ${errorData.id}. Обратитесь к менеджеру @aiviral_manager с номером ошибки.`);
     }
 });
 
