@@ -184,7 +184,7 @@ export class GenerationService {
             console.error(`❌ Generation ${generationId} failed: ${err.message}`);
             
             // Логируем ошибку в систему
-            await errorLogger.logError({
+            const errorData = await errorLogger.logError({
                 message: `Video generation failed: ${err.message}`,
                 stack: err.stack,
                 name: 'GenerationError',
@@ -194,7 +194,8 @@ export class GenerationService {
             
             await this.updateGeneration(generationId, {
                 status: 'failed',
-                error: err.message
+                error: err.message,
+                errorId: errorData.id
             });
             
             // Получаем генерацию для доступа к chatId
@@ -204,6 +205,7 @@ export class GenerationService {
                 await this.notifyUser(generation.chatId || generation.userId, {
                     status: 'failed',
                     error: err.message,
+                    errorId: errorData.id,
                     generationId: generationId
                 });
             }
