@@ -28,7 +28,7 @@ const userService = new UserService();
 const orderService = new OrderService();
 const paymentCryptoService = new PaymentCryptoService();
 const paymentFiatService = new PaymentFiatService();
-const generationService = new GenerationService();
+const generationService = new GenerationService(bot); // Передаем bot instance
 const referralService = new ReferralService();
 
 // Session middleware
