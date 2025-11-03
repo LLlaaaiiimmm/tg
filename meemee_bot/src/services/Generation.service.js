@@ -47,11 +47,24 @@ export class GenerationService {
                     return { error: 'Мем не найден' };
                 }
 
-                const genderText = gender === 'male' ? 'мальчик' : 'девочка';
-                prompt = memeData.prompt
-                    .replace('{name}', name)
-                    .replace('{gender}', gender)
-                    .replace('{gender_text}', genderText);
+                // Определяем все варианты замены для гендера
+                const genderReplacements = this.getGenderReplacements(gender);
+                
+                // Обрабатываем промпт - может быть строкой или объектом
+                if (typeof memeData.prompt === 'string') {
+                    // Простой строковый промпт
+                    prompt = memeData.prompt
+                        .replace('{name}', name)
+                        .replace('{gender}', gender)
+                        .replace('{gender_text}', genderReplacements.gender_text);
+                } else {
+                    // Сложный JSON промпт - рекурсивно заменяем все плейсхолдеры
+                    prompt = this.replacePlaceholders(
+                        JSON.parse(JSON.stringify(memeData.prompt)), 
+                        { name, ...genderReplacements }
+                    );
+                }
+                
                 memeName = memeData.name;
             }
 
@@ -86,6 +99,52 @@ export class GenerationService {
             console.error(`❌ Error creating generation: ${err.message}`);
             return { error: err.message };
         }
+    }
+
+    // Получение всех замен для гендера
+    getGenderReplacements(gender) {
+        if (gender === 'male') {
+            return {
+                gender_text: 'мальчик',
+                gender_child: 'boy',
+                gender_pronoun: 'He',
+                gender_possessive: 'his',
+                gender_object: 'him',
+                gender_full_description: 'полный мальчик славянской национальности'
+            };
+        } else {
+            return {
+                gender_text: 'девочка',
+                gender_child: 'girl',
+                gender_pronoun: 'She',
+                gender_possessive: 'her',
+                gender_object: 'her',
+                gender_full_description: 'полная девочка славянской национальности'
+            };
+        }
+    }
+
+    // Рекурсивная замена плейсхолдеров в объекте/строке
+    replacePlaceholders(obj, replacements) {
+        if (typeof obj === 'string') {
+            // Заменяем все плейсхолдеры в строке
+            let result = obj;
+            for (const [key, value] of Object.entries(replacements)) {
+                result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+            }
+            return result;
+        } else if (Array.isArray(obj)) {
+            // Обрабатываем массивы
+            return obj.map(item => this.replacePlaceholders(item, replacements));
+        } else if (typeof obj === 'object' && obj !== null) {
+            // Обрабатываем объекты
+            const result = {};
+            for (const [key, value] of Object.entries(obj)) {
+                result[key] = this.replacePlaceholders(value, replacements);
+            }
+            return result;
+        }
+        return obj;
     }
 
     // Обработка генерации
