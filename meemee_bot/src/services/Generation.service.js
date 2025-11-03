@@ -501,6 +501,14 @@ export class GenerationService {
             } else if (data.status === 'failed') {
                 console.log(`📤 Sending failure notification to user ${chatId}...`);
                 
+                // Получаем генерацию для возврата квоты
+                const generation = await this.getGeneration(data.generationId);
+                if (generation && generation.userId) {
+                    // Возвращаем квоту пользователю
+                    await this.userService.refundQuota(generation.userId);
+                    console.log(`💰 Refunded quota for user ${generation.userId}`);
+                }
+                
                 await this.bot.telegram.sendMessage(
                     chatId,
                     `❌ К сожалению, не удалось создать видео.\n\n` +
