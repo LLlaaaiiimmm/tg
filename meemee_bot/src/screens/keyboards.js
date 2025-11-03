@@ -100,17 +100,23 @@ export async function createMainMenuKeyboard(userId) {
     
     const buttons = [];
     
-    // Если есть бесплатные генерации, показываем кнопку
-    if (freeQuota > 0) {
-        buttons.push([{
-            text: `🎁 Использовать бесплатную генерацию (осталось: ${freeQuota})`,
-            callback_data: 'use_free_generation'
-        }]);
-    }
+    // ЗАКОММЕНТИРОВАНО: Старая кнопка бесплатной генерации
+    // if (freeQuota > 0) {
+    //     buttons.push([{
+    //         text: `🎁 Использовать бесплатную генерацию (осталось: ${freeQuota})`,
+    //         callback_data: 'use_free_generation'
+    //     }]);
+    // }
+    
+    // Новая кнопка "Бесплатный мем" - ведет на каталог мемов
+    buttons.push([{
+        text: '🎁 Бесплатный мем',
+        callback_data: 'catalog'
+    }]);
     
     // Остальные кнопки меню
     buttons.push(
-        [{ text: '🎬 Доступные мемы', callback_data: 'catalog' }],
+        [{ text: '🎬 Создать мем', callback_data: 'catalog' }],
         [{ text: '💳 Купить видео', callback_data: 'buy' }],
         [{ text: '👤 Личный кабинет', callback_data: 'profile' }],
         [{ text: '🎁 Приведи друга', callback_data: 'referral' }],
