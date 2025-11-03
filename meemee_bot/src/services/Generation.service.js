@@ -182,6 +182,16 @@ export class GenerationService {
             }
         } catch (err) {
             console.error(`❌ Generation ${generationId} failed: ${err.message}`);
+            
+            // Логируем ошибку в систему
+            await errorLogger.logError({
+                message: `Video generation failed: ${err.message}`,
+                stack: err.stack,
+                name: 'GenerationError',
+                source: 'Generation Service',
+                context: { generationId }
+            });
+            
             await this.updateGeneration(generationId, {
                 status: 'failed',
                 error: err.message
