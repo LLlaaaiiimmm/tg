@@ -725,7 +725,7 @@ bot.catch(async (err, ctx) => {
     console.error('❌ Bot error:', err);
     
     // Логируем ошибку в систему
-    await errorLogger.logError({
+    const errorData = await errorLogger.logError({
         message: err.message,
         stack: err.stack,
         name: err.name || 'BotError',
@@ -741,7 +741,7 @@ bot.catch(async (err, ctx) => {
     await notifyAdminsAboutError(err, ctx);
     
     if (ctx) {
-        ctx.reply('Произошла ошибка. Попробуйте позже или обратитесь в поддержку.')
+        ctx.reply(`❌ Произошла ошибка номер ${errorData.id}. Обратитесь к менеджеру @aiviral_manager с номером ошибки.`)
             .catch(e => console.error('Failed to send error message:', e));
     }
 });
