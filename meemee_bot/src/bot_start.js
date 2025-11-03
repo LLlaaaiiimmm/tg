@@ -276,15 +276,6 @@ bot.on('text', async (ctx) => {
     try {
         ctx.session = ctx.session || {};
         
-        // Обработка команды "Создать мем" из reply клавиатуры (с эмодзи)
-        if (ctx.message.text === '🎬 Создать мем') {
-            const keyboard = createCatalogKeyboard();
-            await ctx.reply(MESSAGES.MEMES_CATALOG, { 
-                reply_markup: keyboard
-            });
-            return;
-        }
-        
         if (ctx.session.waitingFor === 'free_prompt') {
             const prompt = ctx.message.text.trim();
             
