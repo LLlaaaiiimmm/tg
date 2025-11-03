@@ -30,15 +30,25 @@ function verifyLavaSignature(data, signature) {
 // Webhook для Lava (фиат платежи)
 app.post('/webhook/lava', async (req, res) => {
     try {
-        console.log('📥 Lava webhook received:', JSON.stringify(req.body));
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('📥 Lava webhook received at:', new Date().toISOString());
+        console.log('📦 Full webhook data:', JSON.stringify(req.body, null, 2));
+        console.log('📋 Headers:', JSON.stringify(req.headers, null, 2));
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
         const { id, status, email } = req.body;
 
         // Проверка подписи (если используется)
         const signature = req.headers['x-signature'];
-        if (signature && !verifyLavaSignature(req.body, signature)) {
-            console.error('❌ Invalid Lava signature');
-            return res.status(403).json({ error: 'Invalid signature' });
+        if (signature) {
+            const isValid = verifyLavaSignature(req.body, signature);
+            console.log(`🔐 Signature verification: ${isValid ? '✅ Valid' : '❌ Invalid'}`);
+            if (!isValid) {
+                console.error('❌ Invalid Lava signature');
+                return res.status(403).json({ error: 'Invalid signature' });
+            }
+        } else {
+            console.log('⚠️ No signature provided');
         }
 
         // Находим заказ по email или parent ID
@@ -48,35 +58,65 @@ app.post('/webhook/lava', async (req, res) => {
             return res.status(404).json({ error: 'Order not found' });
         }
 
+        console.log(`📦 Order found: orderId=${order.orderId}, userId=${order.userId}, package=${order.package}, isPaid=${order.isPaid}`);
+
         if (order.isPaid) {
             console.log('ℹ️ Order already paid:', order.orderId);
             return res.status(200).json({ success: true, message: 'Already paid' });
         }
 
         // Обрабатываем успешный платеж
-        if (status === 'success' || status === 'paid') {
-            console.log('✅ Processing successful payment:', order.orderId);
+        const isSuccess = status && (
+            status.toLowerCase() === 'success' || 
+            status.toLowerCase() === 'paid' || 
+            status.toLowerCase() === 'completed'
+        );
+
+        if (isSuccess) {
+            console.log('✅ Processing successful fiat payment:', order.orderId);
 
             // Отмечаем заказ как оплаченный
             await orderService.markAsPaid(order.orderId);
 
-            // Добавляем генерации
+            // Проверяем что пакет существует
             const pkg = PACKAGES[order.package];
-            await userService.addPaidQuota(order.userId, pkg.generations);
+            if (!pkg) {
+                console.error(`❌ Package not found: ${order.package}`);
+                console.error(`Available packages: ${Object.keys(PACKAGES).join(', ')}`);
+                return res.status(400).json({ error: 'Package not found' });
+            }
+
+            // Добавляем генерации
+            console.log(`💳 Adding ${pkg.generations} videos to user ${order.userId}`);
+            const addResult = await userService.addPaidQuota(order.userId, pkg.generations);
+
+            if (!addResult) {
+                console.error(`❌ Failed to add quota to user ${order.userId}`);
+                return res.status(500).json({ error: 'Failed to add quota' });
+            }
+
+            console.log(`✅ Successfully added ${pkg.generations} videos to user ${order.userId}`);
 
             // Обрабатываем кешбэк для эксперта
-            await referralService.processExpertCashback(order.userId, order.amount);
+            try {
+                await referralService.processExpertCashback(order.userId, order.amount);
+                console.log('✅ Cashback processed');
+            } catch (cashbackErr) {
+                console.error('⚠️ Cashback processing failed:', cashbackErr.message);
+                // Не фейлим весь webhook из-за кешбека
+            }
 
             // Здесь можно отправить уведомление пользователю через бота
             // но для этого нужен доступ к bot instance
 
-            res.status(200).json({ success: true });
+            res.status(200).json({ success: true, message: 'Payment processed' });
         } else {
-            console.log('ℹ️ Payment status:', status);
-            res.status(200).json({ success: true });
+            console.log('ℹ️ Fiat payment status (not success):', status);
+            res.status(200).json({ success: true, message: 'Status noted' });
         }
     } catch (err) {
         console.error('❌ Error in Lava webhook:', err);
+        console.error('Stack:', err.stack);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
