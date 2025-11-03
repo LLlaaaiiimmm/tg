@@ -87,9 +87,21 @@ app.post('/webhook/crypto', async (req, res) => {
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         console.log('📥 Crypto webhook received at:', new Date().toISOString());
         console.log('📦 Full webhook data:', JSON.stringify(req.body, null, 2));
+        console.log('📋 Headers:', JSON.stringify(req.headers, null, 2));
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-        const { billingID, status, clientId } = req.body;
+        // 0xProcessing может отправлять разные поля
+        // Поддерживаем оба варианта: BillingID и billingID
+        const billingID = req.body.billingID || req.body.BillingID;
+        const status = req.body.status || req.body.Status;
+        const paymentId = req.body.PaymentId || req.body.paymentId;
+
+        console.log(`🔍 Extracted fields: billingID=${billingID}, status=${status}, paymentId=${paymentId}`);
+
+        if (!billingID) {
+            console.error('❌ No billingID in webhook');
+            return res.status(400).json({ error: 'Missing billingID' });
+        }
 
         const order = await orderService.getOrderById(billingID);
         if (!order) {
@@ -97,13 +109,22 @@ app.post('/webhook/crypto', async (req, res) => {
             return res.status(404).json({ error: 'Order not found' });
         }
 
+        console.log(`📦 Order found: userId=${order.userId}, package=${order.package}, isPaid=${order.isPaid}`);
+
         if (order.isPaid) {
             console.log('ℹ️ Order already paid:', billingID);
             return res.status(200).json({ success: true, message: 'Already paid' });
         }
 
         // Обрабатываем успешный платеж
-        if (status === 'success' || status === 'paid') {
+        // Проверяем разные варианты статуса (Success, success, paid)
+        const isSuccess = status && (
+            status.toLowerCase() === 'success' || 
+            status.toLowerCase() === 'paid' || 
+            status.toLowerCase() === 'completed'
+        );
+
+        if (isSuccess) {
             console.log('✅ Processing successful crypto payment:', billingID);
             console.log(`📊 Order details: userId=${order.userId}, package=${order.package}, amount=${order.amount}`);
 
@@ -112,6 +133,7 @@ app.post('/webhook/crypto', async (req, res) => {
             const pkg = PACKAGES[order.package];
             if (!pkg) {
                 console.error(`❌ Package not found: ${order.package}`);
+                console.error(`Available packages: ${Object.keys(PACKAGES).join(', ')}`);
                 return res.status(400).json({ error: 'Package not found' });
             }
 
@@ -127,15 +149,22 @@ app.post('/webhook/crypto', async (req, res) => {
             console.log(`✅ Successfully added ${pkg.generations} videos to user ${order.userId}`);
 
             // Обрабатываем кешбэк для реферала
-            await referralService.processExpertCashback(order.userId, order.amount);
+            try {
+                await referralService.processExpertCashback(order.userId, order.amount);
+                console.log('✅ Cashback processed');
+            } catch (cashbackErr) {
+                console.error('⚠️ Cashback processing failed:', cashbackErr.message);
+                // Не фейлим весь webhook из-за кешбека
+            }
 
-            res.status(200).json({ success: true });
+            res.status(200).json({ success: true, message: 'Payment processed' });
         } else {
-            console.log('ℹ️ Crypto payment status:', status);
-            res.status(200).json({ success: true });
+            console.log('ℹ️ Crypto payment status (not success):', status);
+            res.status(200).json({ success: true, message: 'Status noted' });
         }
     } catch (err) {
         console.error('❌ Error in crypto webhook:', err);
+        console.error('Stack:', err.stack);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
