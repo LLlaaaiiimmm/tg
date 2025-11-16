@@ -1,0 +1,201 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+const ContactPage = () => {
+  const [settings, setSettings] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await axios.get(`${API}/settings`);
+        setSettings(response.data);
+      } catch (error) {
+        console.error('Failed to fetch settings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    toast.success('Повідомлення відправлено! Ми зв’яжемося з вами найближчим часом.');
+    setFormData({ name: '', email: '', message: '' });
+  };
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005BBB]"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      <Navbar />
+      
+      <div className="pt-32 pb-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-4xl sm:text-5xl font-bold text-[#005BBB] mb-8" data-testid="contact-page-title">
+            Контакти
+          </h1>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {/* Contact Info */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Зв’яжіться з нами</h2>
+              
+              <div className="space-y-6">
+                {settings.contact_email && (
+                  <div className="flex items-start space-x-4" data-testid="contact-email">
+                    <div className="bg-[#005BBB] p-3 rounded-full">
+                      <Mail size={24} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-800 mb-1">Email</h3>
+                      <a
+                        href={`mailto:${settings.contact_email}`}
+                        className="text-[#005BBB] hover:text-[#0066CC] transition-colors"
+                      >
+                        {settings.contact_email}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {settings.contact_phone && (
+                  <div className="flex items-start space-x-4" data-testid="contact-phone">
+                    <div className="bg-[#005BBB] p-3 rounded-full">
+                      <Phone size={24} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-800 mb-1">Телефон</h3>
+                      <a
+                        href={`tel:${settings.contact_phone}`}
+                        className="text-[#005BBB] hover:text-[#0066CC] transition-colors"
+                      >
+                        {settings.contact_phone}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {settings.contact_address && (
+                  <div className="flex items-start space-x-4" data-testid="contact-address">
+                    <div className="bg-[#005BBB] p-3 rounded-full">
+                      <MapPin size={24} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-800 mb-1">Адреса</h3>
+                      <p className="text-gray-700">{settings.contact_address}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Placeholder for default values */}
+              {!settings.contact_email && !settings.contact_phone && !settings.contact_address && (
+                <div className="bg-blue-50 rounded-lg p-6">
+                  <p className="text-gray-600">
+                    Контактна інформація буде додана незабаром.
+                    Ви можете додати її через адмін-панель.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Contact Form */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Надішліть повідомлення</h2>
+              
+              <form onSubmit={handleSubmit} className="space-y-6" data-testid="contact-form">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ім’я
+                  </label>
+                  <Input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Ваше ім’я"
+                    required
+                    data-testid="contact-name-input"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <Input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="your@email.com"
+                    required
+                    data-testid="contact-email-input"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Повідомлення
+                  </label>
+                  <Textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    placeholder="Ваше повідомлення..."
+                    required
+                    rows={6}
+                    data-testid="contact-message-textarea"
+                    className="w-full"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  data-testid="contact-submit-button"
+                  className="w-full bg-[#005BBB] hover:bg-[#0066CC] text-white font-semibold py-3 rounded-lg transition-all hover:shadow-lg flex items-center justify-center space-x-2"
+                >
+                  <Send size={20} />
+                  <span>Відправити</span>
+                </Button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default ContactPage;
